@@ -18,6 +18,10 @@ _global_script_class_icons={
 config/name="eat-and-poop"
 config/icon="res://icon.png"
 
+[display]
+
+window/size/height=200
+
 [rendering]
 
 environment/default_environment="res://default_env.tres"
