@@ -7,13 +7,43 @@ var top_left: Vector2 setget set_top_left
 var length: float setget set_length
 var color: Color setget set_color
 
+# length_is_grow: true -> animate growing, false -> animate shrinking
+var length_is_grow: bool = true
+# growth_shrink_amount sets how much to grow/shrink by: 0 == no growth
+const GROW_SHRINK_AMOUNT: float = 0.1 # range: 0.0:1.0
+# TODO: clamp GROW_SHRINK_AMOUNT to the range 0 to 1
+var max_growth: float
+var max_shrink: float
+
 onready var grid: Grid = Grid.new()
 onready var smooth_move: Tween = Tween.new()
 
 func _ready():
 	add_child(grid)
 	self.length = grid.size
+	max_growth = grid.size * (1 + GROW_SHRINK_AMOUNT)
+	max_shrink = grid.size * (1 - GROW_SHRINK_AMOUNT)
 	add_child(smooth_move)
+
+
+# Animate the block.
+# `delta` is time elapsed since `_process()` was last called.
+# `delta` is fed to me from under the hood.
+# `delta` is on the order of 10ms, the exact value depends on how
+# busy the processor is.
+func _process(delta):
+	# Vary the square size
+	# TODO: this is crude... do something better with Tween?
+	# Or don't do this at all. Vary polygon coordinates instead.
+	if length_is_grow:
+		self.length += delta * max_growth
+		if self.length >= max_growth:
+			length_is_grow = not length_is_grow
+	else:
+		self.length -= delta * max_shrink
+		if self.length <= max_shrink:
+			length_is_grow = not length_is_grow
+
 
 # _draw() runs once, sometime shortly after _ready() runs
 func _draw() -> void:

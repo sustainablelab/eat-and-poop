@@ -1,4 +1,4 @@
 class_name Grid
 extends Node
 
-var size: int = 5
+var size: int = 6
