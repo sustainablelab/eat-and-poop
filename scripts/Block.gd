@@ -13,7 +13,8 @@ var square_points: PoolVector2Array setget set_square_points
 var square_wobbles: bool = true
 # Time it takes to move in seconds
 # TODO: decrease speed as the player gets bigger
-var speed: float = 0.2 # bigger number = slower
+# var speed: float = 0.2 # bigger number = slower
+var speed: float
 # self.speed = grid.size / 200.0
 var wobble_period: float = 0.01 # bigger number = slower
 
@@ -48,6 +49,7 @@ func _ready():
 	# Dividing by grid.size exaggerates wobbles for smaller grids
 	# which is good for overcoming truncation to pixel number.
 	GROW_SHRINK_AMOUNT = 0.5 / grid.size
+	# GROW_SHRINK_AMOUNT = 4.0 / grid.size
 	GROW_SHRINK_AMOUNT_WHILE_MOVING = GROW_SHRINK_AMOUNT * 3.0
 	# max_growth = grid.size * (1 + GROW_SHRINK_AMOUNT)
 	# max_shrink = grid.size * (1 - GROW_SHRINK_AMOUNT)
@@ -63,6 +65,12 @@ func _ready():
 	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 	# TODO: decrease speed as the player gets bigger
+	# self.speed = 0.1
+	self.speed = grid.size / 200.0
+	if self.speed > 0.1:
+		self.speed = 0.1
+	if self.speed < 0.05:
+		self.speed = 0.05
 
 # Animate the wobble effect.
 # Use `delta_sum` to detect when a wobble period elapses.
