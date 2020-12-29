@@ -10,7 +10,7 @@ var color: Color setget set_color
 var square_points_are_randomized: bool = true
 
 # growth_shrink_amount sets how much to grow/shrink by: 0 == no growth
-const GROW_SHRINK_AMOUNT: float = 0.1 # range: 0.0:1.0
+const GROW_SHRINK_AMOUNT: float = 0.05 # range: 0.0:1.0
 # TODO: clamp GROW_SHRINK_AMOUNT to the range 0 to 1
 
 # var max_growth: float
@@ -29,6 +29,7 @@ func _ready():
 	# max_shrink = grid.size * (1 - GROW_SHRINK_AMOUNT)
 	max_deviation = grid.size * GROW_SHRINK_AMOUNT
 	add_child(smooth_move)
+	rng.randomize() # setup the generator from a time-based seed
 
 
 # Animate the block.
@@ -100,17 +101,21 @@ func draw_square() -> void:
 	var x:float = self.top_left.x
 	var y:float = self.top_left.y
 	if self.square_points_are_randomized:
-		# TODO: does this belong here or in _ready()?
-		rng.randomize() # setup the generator from a time-based seed
-		# var random_amount = rng.randf_range(max_shrink, max_growth)
 		var random: float
-		random = rng.randfn( # normally-distributed
-				0.0, # mean
-				max_deviation # deviation
-				)
+		# Randomize to a range?
+		# var random_amount = rng.randf_range(max_shrink, max_growth)
+		# Or randomize to a Gaussian distribution?
+		# random = rng.randfn( # normally-distributed
+		# 		0.0, # mean
+		# 		max_deviation # deviation
+		# 		)
+		random = rng.randfn(0.0, max_deviation)
 		points.append(Vector2(x+random,y+random))
+		random = rng.randfn(0.0, max_deviation)
 		points.append(Vector2(x+random,y+random+self.length))
+		random = rng.randfn(0.0, max_deviation)
 		points.append(Vector2(x+random+self.length,y+random+self.length))
+		random = rng.randfn(0.0, max_deviation)
 		points.append(Vector2(x+random+self.length,y+random))
 	else:
 		points.append(Vector2(x,y))
