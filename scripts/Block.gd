@@ -14,6 +14,7 @@ var square_wobbles: bool = true
 # Time it takes to move in seconds
 # TODO: decrease speed as the player gets bigger
 var speed: float = 0.2 # bigger number = slower
+# self.speed = grid.size / 200.0
 var wobble_period: float = 0.01 # bigger number = slower
 
 # growth_shrink_amount sets how much to grow/shrink by: 0 == no growth
@@ -47,7 +48,7 @@ func _ready():
 	# Dividing by grid.size exaggerates wobbles for smaller grids
 	# which is good for overcoming truncation to pixel number.
 	GROW_SHRINK_AMOUNT = 0.5 / grid.size
-	GROW_SHRINK_AMOUNT_WHILE_MOVING = GROW_SHRINK_AMOUNT * 3
+	GROW_SHRINK_AMOUNT_WHILE_MOVING = GROW_SHRINK_AMOUNT * 3.0
 	# max_growth = grid.size * (1 + GROW_SHRINK_AMOUNT)
 	# max_shrink = grid.size * (1 - GROW_SHRINK_AMOUNT)
 	# Player's shape deviates with a wobbly effecet.
@@ -61,10 +62,13 @@ func _ready():
 	var _ret: int
 	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
-
+	# TODO: decrease speed as the player gets bigger
 
 # Animate the wobble effect.
 # Use `delta_sum` to detect when a wobble period elapses.
+# TODO: maybe replace this solution with a timer-based? Any
+# noticeable difference?
+# https://docs.godotengine.org/en/stable/getting_started/workflow/best_practices/godot_notifications.html
 var delta_sum: float = 0
 # `delta` is time elapsed since `_process()` was last called.
 # `delta` is fed to me from under the hood.
