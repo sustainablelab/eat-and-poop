@@ -8,10 +8,12 @@ var length: float setget set_length
 var color: Color setget set_color
 
 onready var grid: Grid = Grid.new()
+onready var smooth_move: Tween = Tween.new()
 
 func _ready():
 	add_child(grid)
 	self.length = grid.size
+	add_child(smooth_move)
 
 # _draw() runs once, sometime shortly after _ready() runs
 func _draw() -> void:
@@ -34,7 +36,20 @@ func set_color(c: Color) -> void:
 
 # Update position when the Player moves its block.
 func move(direction: Vector2 ) -> void:
-	self.top_left += direction * grid.size
+	# Choppy motion:
+	#self.top_left += direction * grid.size
+	# Smooth motion:
+	smooth_move.interpolate_property(
+		self, # object
+		"top_left", # property name
+		self.top_left, # start
+		self.top_left + direction * grid.size, # stop
+		0.1, # take 100 ms to move
+		Tween.TRANS_SINE,
+		Tween.EASE_IN_OUT,
+		0) # delay
+	smooth_move.start()
+
 
 # I wrote `draw_square`.
 # I learned from the example here on "Custom drawing in 2D":
