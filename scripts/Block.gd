@@ -28,11 +28,12 @@ func set_top_left(xy: Vector2) -> void:
 
 func set_length(d: float) -> void:
 	length = d
+	update()
 
 
 func set_color(c: Color) -> void:
 	color = c
-
+	update()
 
 # Update position when the Player moves its block.
 func move(direction: Vector2 ) -> void:
