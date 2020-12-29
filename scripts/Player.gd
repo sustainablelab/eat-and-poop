@@ -1,10 +1,12 @@
 extends Node
 
 
-onready var block: ColorRect = $Block
+# I don't need to use the editor to add `Block` as a child node
+# of `Player`. I do this in the code instead!
+# Create a player. Add node in `_ready()` with `add_child(player)`.
+onready var player: Block = Block.new()
 
 func _ready() -> void:
-	block.color = ColorN("lightsalmon", 1) # color, alpha
+	add_child(player)
+	# block.color = ColorN("lightsalmon", 1) # color, alpha
 	# Set size with `set_size`
-	# TODO: maybe custom drawing in 2D makes more sense?
-	# https://docs.godotengine.org/en/stable/tutorials/2d/custom_drawing_in_2d.html#
