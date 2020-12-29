@@ -7,12 +7,27 @@ var top_left: Vector2 setget set_top_left
 var length: float setget set_length
 var color: Color setget set_color
 
+var square_points_are_randomized: bool = true
+
+# growth_shrink_amount sets how much to grow/shrink by: 0 == no growth
+const GROW_SHRINK_AMOUNT: float = 0.1 # range: 0.0:1.0
+# TODO: clamp GROW_SHRINK_AMOUNT to the range 0 to 1
+
+# var max_growth: float
+# var max_shrink: float
+var max_deviation: float
+# Grow/Shrink by a random amount
+var rng = RandomNumberGenerator.new()
+
 onready var grid: Grid = Grid.new()
 onready var smooth_move: Tween = Tween.new()
 
 func _ready():
 	add_child(grid)
 	self.length = grid.size
+	# max_growth = grid.size * (1 + GROW_SHRINK_AMOUNT)
+	# max_shrink = grid.size * (1 - GROW_SHRINK_AMOUNT)
+	max_deviation = grid.size * GROW_SHRINK_AMOUNT
 	add_child(smooth_move)
 
 
@@ -22,9 +37,8 @@ func _ready():
 # `delta` is on the order of 10ms, the exact value depends on how
 # busy the processor is.
 # Using `_delta` is a convention that means I do not depend on `delta`.
-func _process(delta):
-	var is_randomized: bool = true
-	draw_square(is_randomized)
+func _process(_delta):
+	update() # update the _draw() stuff
 
 
 # _draw() runs once, sometime shortly after _ready() runs
@@ -49,10 +63,14 @@ func set_color(c: Color) -> void:
 
 # Update position when the Player moves its block.
 func move(direction: Vector2 ) -> void:
-	# Choppy motion:
+	# Choppy motion without Tween:
 	#self.top_left += direction * grid.size
-	# Smooth motion:
-	smooth_move.interpolate_property(
+
+	# Smooth motion with Tween:
+	# _done is true when Tween.blah() is done.
+	# I store return values in "_vars" to avoid Debugger warnings.
+	var _done: bool
+	_done = smooth_move.interpolate_property(
 		self, # object
 		"top_left", # property name
 		self.top_left, # start
@@ -61,7 +79,7 @@ func move(direction: Vector2 ) -> void:
 		Tween.TRANS_SINE,
 		Tween.EASE_IN_OUT,
 		0) # delay
-	smooth_move.start()
+	_done = smooth_move.start()
 
 
 # I wrote `draw_square`.
@@ -75,17 +93,25 @@ func move(direction: Vector2 ) -> void:
 #					10.0,
 #					ColorN("lightsalmon", 1),
 #					)
-func draw_square(is_randomized: bool = false) -> void:
+func draw_square() -> void:
 	# Define the vertices
 	var points: PoolVector2Array = PoolVector2Array()
 	assert(points.empty()) # no points yet
 	var x:float = self.top_left.x
 	var y:float = self.top_left.y
-	if is_randomized:
-		points.append(Vector2(x,y))
-		points.append(Vector2(x,y+self.length))
-		points.append(Vector2(x+self.length,y+self.length))
-		points.append(Vector2(x+self.length,y))
+	if self.square_points_are_randomized:
+		# TODO: does this belong here or in _ready()?
+		rng.randomize() # setup the generator from a time-based seed
+		# var random_amount = rng.randf_range(max_shrink, max_growth)
+		var random: float
+		random = rng.randfn( # normally-distributed
+				0.0, # mean
+				max_deviation # deviation
+				)
+		points.append(Vector2(x+random,y+random))
+		points.append(Vector2(x+random,y+random+self.length))
+		points.append(Vector2(x+random+self.length,y+random+self.length))
+		points.append(Vector2(x+random+self.length,y+random))
 	else:
 		points.append(Vector2(x,y))
 		points.append(Vector2(x,y+self.length))
