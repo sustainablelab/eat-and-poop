@@ -2,8 +2,12 @@ extends Node2D
 
 var game_window: Rect2 # Game window
 
+# Parent sets `num_players` based on number of connected joysticks
+# Hardcode `num_players` for testing `World.tscn` without a parent.
 var num_players: int = 4 # number of joysticks connected
 var players: Array = [] # array to hold player instances
+
+# TODO: control each player from a different joystick
 
 var rng = RandomNumberGenerator.new()
 
@@ -22,7 +26,7 @@ func _ready() -> void:
 	var player_scene = preload("res://scenes/Player.tscn")
 
 	# Instantiate N players
-	# TODO: Parent sets `num_players` based on number of connected joysticks
+	# Parent sets `num_players` based on number of connected joysticks
 	for _each in range(num_players):
 		players.append(player_scene.instance())
 	# var player1 = player_scene.instance()
@@ -42,10 +46,10 @@ func _ready() -> void:
 
 	# Set the color of each player
 	var color_dict: Dictionary = {
-		0: ColorN("lightsalmon", 1), # color, alpha
-		1: ColorN("yellow", 1), # color, alpha
-		2: ColorN("lightseagreen", 1), # color, alpha
-		3: ColorN("magenta", 1), # color, alpha
+		0: ColorN("magenta", 1), # color, alpha
+		1: ColorN("lightseagreen", 1), # color, alpha
+		2: ColorN("yellow", 1), # color, alpha
+		3: ColorN("lightsalmon", 1), # color, alpha
 		}
 	for player_num in range(num_players):
 		players[player_num].player_block.color = color_dict[player_num]
