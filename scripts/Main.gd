@@ -26,3 +26,15 @@ func _ready() -> void:
 	# Make the world a child node of the Main scene
 	add_child(world)
 
+	# Detect when a joystick connects
+	# (`connect()` returns 0: throw away return value in a '_var')
+	var _ret: int
+	_ret = Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
+	print("Input.connect return value: {val}".format({"val":_ret}))
+
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	# DEBUGGING
+	if connected:
+		print("Connected device {d}.".format({"d":device}))
+	else:
+		print("Disconnected device {d}.".format({"d":device}))
