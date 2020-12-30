@@ -12,7 +12,7 @@ extends Node2D
 
 func _ready() -> void:
 	# DEBUGGING
-	print(Input.get_connected_joypads())
+	# print(Input.get_connected_joypads())
 
 	# Load the World scene
 	var world_scene = preload("res://scenes/World.tscn")
@@ -30,7 +30,8 @@ func _ready() -> void:
 	# (`connect()` returns 0: throw away return value in a '_var')
 	var _ret: int
 	_ret = Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
-	print("Input.connect return value: {val}".format({"val":_ret}))
+	# DEBUGGING
+	# print("Input.connect return value: {val}".format({"val":_ret}))
 
 func _on_joy_connection_changed(device: int, connected: bool) -> void:
 	# DEBUGGING
@@ -38,3 +39,14 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 		print("Connected device {d}.".format({"d":device}))
 	else:
 		print("Disconnected device {d}.".format({"d":device}))
+
+	if connected:
+		# Update number of players to number of connected joysticks.
+		# world.num_players = Input.get_connected_joypads().size()
+		# Notify the World to add the connected player.
+		print("Notify the World to add the connected player.")
+
+	else:
+		# TODO
+		# Notify the World to remove the disconnected player.
+		print("Notify the World to remove the disconnected player.")
