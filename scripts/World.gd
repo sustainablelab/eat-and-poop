@@ -69,6 +69,9 @@ func _ready() -> void:
 	# player1.player_block.top_left = random_position()
 	# player2.player_block.top_left = random_position()
 
+	# TODO: index at random into the list of colors so that I'm
+	# not limited to 4 players.
+	# TODO: let players change their color before the game begins.
 	# Set the color of each player
 	var color_dict: Dictionary = {
 		0: ColorN("magenta", 1), # color, alpha

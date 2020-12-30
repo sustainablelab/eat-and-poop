@@ -2,6 +2,14 @@ extends Node2D
 
 # TODO: add/drop players during game when joysticks are added/removed
 
+# TODO: start in a title scene before entering World.
+
+# TODO: make joystick mapping editable
+
+# TODO: save joystick mapping to file -- load mapping from file
+# if it exists for that player, otherwise default to the mapping
+# I have now.
+
 func _ready() -> void:
 	# DEBUGGING
 	print(Input.get_connected_joypads())

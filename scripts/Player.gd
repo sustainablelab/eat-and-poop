@@ -80,5 +80,6 @@ func _process(_delta):
 		for motion in ui_inputs: # `for` iterates over dict keys
 			if Input.is_action_pressed(motion):
 				player_block.move(ui_inputs[motion])
-				print(Input.get_joy_name(self.device_num))
-				print(Input.get_joy_axis(self.device_num, 0))
+				# DEBUGGING
+				# print(Input.get_joy_name(self.device_num))
+				# print(Input.get_joy_axis(self.device_num, 0))
