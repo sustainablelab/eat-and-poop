@@ -28,14 +28,51 @@ func _ready() -> void:
 	# Make the world a child node of the Main scene
 	add_child(world)
 
-	# Detect when a joystick connects
+	# Connect to the signal that detects when a joystick connects
 	# (`connect()` returns 0: throw away return value in a '_var')
 	var _ret: int
 	_ret = Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
 	# DEBUGGING
-	# print("Input.connect return value: {val}".format({"val":_ret}))
+	print("joy_connection_changed: Input.connect return value: {val}".format({"val":_ret}))
 
 func _on_joy_connection_changed(device: int, connected: bool) -> void:
+
+	# HARDWARE TESTS:
+	# 1. Two XBOX controllers: always PASS.
+	# Expect when connecting/disconnecting joysticks the player
+	# fades when disconnected and is restored when connected.
+	# Run within Godot with F5: PASS
+	# Run as exported .exe on Windows: PASS.
+	#
+	# 2. Two XBOX controllers and Steam controller: FAIL intermittently
+	#
+	# To use the Steam controller I need to launch the game from Steam.
+	# Run as exported .exe on Windows, but launch from Steam (add
+	# .exe as a non-Steam game to Steam library).
+	#
+	# Expect all players are connected when game starts.
+	# Launch from Steam: PASS
+	#
+	# Expect when disconnecting joysticks the player fades.
+	# Launch from Steam: PASS
+	#
+	# Expect when disconnecting/reconnecting joysticks the player
+	# fades when disconnected and is restored when connected.
+	# Launch from Steam: PASS sometimes
+	# Observed behaviors on FAIL:
+	# 1. Cycling the Steam controller steals control from an XBOX
+	# controlled-player. The XBOX controller takes over what used
+	# to be the Steam controller's player.
+	#
+	# 2. Sometimes the game does not recognize when a player
+	# reconnects. But if a player is able to reconnect once,
+	# reconnecting always works in that session for that player.
+	# If reconnecting does not work for a player, it will not
+	# work again for that joystick in that session.
+	#
+	# This behavior is not particular to any of the three
+	# controllers.
+
 	# DEBUGGING
 	if connected:
 		print("Connected device {d}.".format({"d":device}))

@@ -56,9 +56,15 @@ func random_position() -> Vector2:
 					game_window.end.y)
 					)
 
-func remove_player(_player_index: int) -> void:
-	# TODO: Remove the player.
-	# players[player_index]
+func remove_player(player_index: int) -> void:
+	# TODO: Remove the player. Or show in some way that the
+	# player is inactive.
+	# For now I leave the disconnected player on screen and
+	# do nothing. The player is technically still "in play" and
+	# other players can interact with it. But the player cannot
+	# be controlled because the joystick is disconnected.
+	# When the joystick reconnects, control is restored.
+	players[player_index].player_block.color.a = 0.3
 	pass
 
 func add_player(player_index: int) -> void:
@@ -69,17 +75,26 @@ func add_player(player_index: int) -> void:
 	# First handle the corner case:
 	# If a player disconnects and reconnects, the World already
 	# knows about them. They are not a "new" player.
+	# There information is still in the `players` array.
 	# Therefore, instead of initializing like a "new" player, we
 	# just want to revive this player.
+	#
 	# To catch this corner case, check if the player is "new".
 	# The player is new if player_index == number of players so far.
 	# If player_index is < number of players so far, this is an
-	# "old" player.
+	# "old" player. Even if the last player to join leaves the
+	# game, the number of 
 	if player_index < players.size():
 		# TODO: add code to revive old player.
+		# I'll need to "revive" once I've coded "removal."
+		# For now I leave the disconnected player on screen and
+		# do nothing, so there is nothing to do to "revive" the
+		# player. They reconnect their joystick and they can move
+		# again.
+		players[player_index].player_block.color.a = 1
 		return
 
-	# Instantiate a player.
+	# Instantiate a new player.
 	# Append the player instance to array `players`.
 	players.append(player_scene.instance())
 
