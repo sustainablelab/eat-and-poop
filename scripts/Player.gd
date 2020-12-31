@@ -1,4 +1,4 @@
-extends Node # change to Spatial
+extends Node2D # change to Spatial
 # TODO: use Spatial translation() instead of hard-coded `top_left` coordinates
 
 # Hardcode a default joystick device_num for testing.
