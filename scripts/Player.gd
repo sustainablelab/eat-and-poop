@@ -66,6 +66,16 @@ var ui_inputs = {
 func _on_smooth_move_started(_object, _key): # _vars are unused
 	self.is_moving = true
 
+	# DEBUGGING
+	print("tween start:")
+	print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
+	print("\tself.position = {v}".format({"v":self.position}))
+
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
 	self.is_moving = false
+
+	# DEBUGGING
+	print("tween stop:")
+	print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
+	print("\tself.position = {v}".format({"v":self.position}))
