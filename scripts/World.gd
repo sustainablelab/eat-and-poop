@@ -56,10 +56,28 @@ func random_position() -> Vector2:
 					game_window.end.y)
 					)
 
+func remove_player(_player_index: int) -> void:
+	# TODO: Remove the player.
+	# players[player_index]
+	pass
+
 func add_player(player_index: int) -> void:
 	# Add a player to the game.
 	# `player_index` is the player's index in array `players`.
 	# `player_index` is also the player's joystick device number.
+
+	# First handle the corner case:
+	# If a player disconnects and reconnects, the World already
+	# knows about them. They are not a "new" player.
+	# Therefore, instead of initializing like a "new" player, we
+	# just want to revive this player.
+	# To catch this corner case, check if the player is "new".
+	# The player is new if player_index == number of players so far.
+	# If player_index is < number of players so far, this is an
+	# "old" player.
+	if player_index < players.size():
+		# TODO: add code to revive old player.
+		return
 
 	# Instantiate a player.
 	# Append the player instance to array `players`.

@@ -10,6 +10,8 @@ extends Node2D
 # if it exists for that player, otherwise default to the mapping
 # I have now.
 
+var world: Node2D
+
 func _ready() -> void:
 	# DEBUGGING
 	# print(Input.get_connected_joypads())
@@ -18,7 +20,7 @@ func _ready() -> void:
 	var world_scene = preload("res://scenes/World.tscn")
 
 	# Instantiate the World
-	var world = world_scene.instance()
+	world = world_scene.instance()
 
 	# Set number of players to number of joysticks
 	world.num_players = Input.get_connected_joypads().size()
@@ -42,11 +44,17 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 
 	if connected:
 		# Update number of players to number of connected joysticks.
-		# world.num_players = Input.get_connected_joypads().size()
-		# Notify the World to add the connected player.
-		print("Notify the World to add the connected player.")
+		world.num_players = Input.get_connected_joypads().size()
+
+		# Add the player to the world. Use the device number as
+		# the player index into the array of players.
+		world.add_player(device)
+		print("Added player index {d} to the world.".format({"d":device}))
 
 	else:
+		# Do not change the number of players when a player disconnects.
+		# There is a chance the disconnected player wins the round.
+
 		# TODO
-		# Notify the World to remove the disconnected player.
-		print("Notify the World to remove the disconnected player.")
+		world.remove_player(device)
+		print("Removed player index {d} from the world.".format({"d":device}))
