@@ -24,7 +24,8 @@ var color: Color = ColorN("lightsalmon", 1) # color, alpha
 func _ready() -> void:
 	add_child(player_block)
 	# Player size is determined by Grid.size
-	# Set player's starting position
+	# Player starting position is determined by Parent.
+	# Hardcode player's starting position for testing.
 	var x:float = 100.0
 	var y:float = 100.0
 	player_block.top_left = Vector2(x,y)
@@ -36,44 +37,10 @@ func _ready() -> void:
 	_ret = player_block.smooth_move.connect("tween_started", self, "_on_smooth_move_started")
 	_ret = player_block.smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 
-# ------------------------------------------------
+
+# ------------------------------------------------------
 # | Move player_block based on keyboard/joystick input |
-# ------------------------------------------------
-
-# Assign a direction to each arrow press.
-var ui_inputs = {
-	"ui_right": Vector2.RIGHT,
-	"ui_left":  Vector2.LEFT,
-	"ui_up":    Vector2.UP,
-	"ui_down":  Vector2.DOWN,
-	}
-
-# Call one move per arrow press. Event based.
-# One move per press is undesirable.
-# TODO: difference between unhandled_input and input?
-# func _input(event):
-# func _unhandled_input(event):
-# 	print(event.as_text())
-# 	for arrow in ui_inputs.keys():
-# 		if event.is_action_pressed(arrow):
-# 			player_block.move(ui_inputs[arrow])
-
-# Move while key is pressed. Polling based.
-# Neat but undesirable affect that Tween does not start until release.
-# func _process(_delta):
-# 	for arrow in ui_inputs.keys():
-# 		if Input.is_action_pressed(arrow):
-# 			player_block.move(ui_inputs[arrow])
-
-
-# Track when the movement tween animation is happening.
-func _on_smooth_move_started(_object, _key): # _vars are unused
-	self.is_moving = true
-
-func _on_smooth_move_completed(_object, _key): # _vars are unused
-	self.is_moving = false
-
-
+# ------------------------------------------------------
 func _process(_delta):
 	# Ignore events while Tween animates player_block moving.
 	if not is_moving:
@@ -83,3 +50,22 @@ func _process(_delta):
 				# DEBUGGING
 				# print(Input.get_joy_name(self.device_num))
 				# print(Input.get_joy_axis(self.device_num, 0))
+
+# Assign a direction to each arrow press.
+# Actual InputMap is defined by Parent.
+# Hardcode a mapping for testing.
+var ui_inputs = {
+	"ui_right": Vector2.RIGHT,
+	"ui_left":  Vector2.LEFT,
+	"ui_up":    Vector2.UP,
+	"ui_down":  Vector2.DOWN,
+	}
+
+
+# Track when the movement tween animation is happening.
+func _on_smooth_move_started(_object, _key): # _vars are unused
+	self.is_moving = true
+
+
+func _on_smooth_move_completed(_object, _key): # _vars are unused
+	self.is_moving = false

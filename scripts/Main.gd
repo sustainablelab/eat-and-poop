@@ -1,7 +1,5 @@
 extends Node2D
 
-# TODO: add/drop players during game when joysticks are added/removed
-
 # TODO: start in a title scene before entering World.
 
 # TODO: make joystick mapping editable
@@ -92,6 +90,5 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 		# Do not change the number of players when a player disconnects.
 		# There is a chance the disconnected player wins the round.
 
-		# TODO
 		world.remove_player(device)
 		print("Removed player index {d} from the world.".format({"d":device}))
