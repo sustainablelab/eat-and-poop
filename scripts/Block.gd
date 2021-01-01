@@ -14,7 +14,7 @@ var square_wobbles: bool = true
 # Time it takes to move in seconds
 # TODO: decrease speed as the player gets bigger
 # var speed: float = 0.2 # bigger number = slower
-var speed: float
+# var speed: float
 # self.speed = grid.size / 200.0
 var wobble_period: float = 0.01 # bigger number = slower
 
@@ -39,7 +39,7 @@ var max_deviation: float
 var rng = RandomNumberGenerator.new()
 
 onready var grid: Grid = Grid.new()
-onready var smooth_move: Tween = Tween.new()
+# onready var smooth_move: Tween = Tween.new()
 
 func _ready():
 	add_child(grid)
@@ -57,20 +57,19 @@ func _ready():
 	max_deviation = grid.size * GROW_SHRINK_AMOUNT
 	# Seed a random number generator for wobbling.
 	rng.randomize() # setup the generator from a time-based seed
-	# Use a tween to animate moving in the grid.
-	add_child(smooth_move)
-	# Detect tween start/stop to change wobble effect while moving.
-	# (`connect()` returns 0: throw away return value in a '_var')
-	var _ret: int
-	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
-	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
+	## Use a tween to animate moving in the grid.
+	# add_child(smooth_move)
+	# # Detect tween start/stop to change wobble effect while moving.
+	# # (`connect()` returns 0: throw away return value in a '_var')
+	# var _ret: int
+	# _ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
+	# _ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 	# TODO: decrease speed as the player gets bigger
-	# self.speed = 0.1
-	self.speed = grid.size / 200.0
-	if self.speed > 0.1:
-		self.speed = 0.1
-	if self.speed < 0.05:
-		self.speed = 0.05
+	# self.speed = grid.size / 200.0
+	# if self.speed > 0.1:
+	# 	self.speed = 0.1
+	# if self.speed < 0.05:
+	# 	self.speed = 0.05
 
 # Animate the wobble effect.
 # Use `delta_sum` to detect when a wobble period elapses.
@@ -117,36 +116,38 @@ func set_color(c: Color) -> void:
 	color = c
 	update()
 
-# Update position when the Player moves its block.
-func move(direction: Vector2 ) -> void:
-	# Choppy motion without Tween:
-	#self.top_left += direction * grid.size
+## Update position when the Player moves its block.
+#func move(direction: Vector2 ) -> void:
+#	# Choppy motion without Tween:
+#	#self.top_left += direction * grid.size
 
-	# Smooth motion with Tween:
+#	# Smooth motion with Tween:
 
-	# _done is true when Tween.blah() is done.
-	# I store return values in "_vars" to avoid Debugger warnings.
-	var _done: bool
-	_done = smooth_move.interpolate_property(
-		self, # object
-		"top_left", # property name
-		self.top_left, # start
-		self.top_left + direction * grid.size, # stop
-		self.speed, # time it takes to move in seconds
-		Tween.TRANS_SINE,
-		Tween.EASE_IN_OUT,
-		0) # delay
+#	# _done is true when Tween.blah() is done.
+#	# I store return values in "_vars" to avoid Debugger warnings.
+#	var _done: bool
+#	_done = smooth_move.interpolate_property(
+#		self, # object
+#		"top_left", # property name
+#		self.top_left, # start
+#		self.top_left + direction * grid.size, # stop
+#		self.speed, # time it takes to move in seconds
+#		Tween.TRANS_SINE,
+#		Tween.EASE_IN_OUT,
+#		0) # delay
 
-	_done = smooth_move.start()
+#	_done = smooth_move.start()
 
 
 # Use a larger deviation in draw_square points to emphasize movement
-func _on_smooth_move_started(_object, _key): # _vars are unused
+# func _on_smooth_move_started(_object, _key): # _vars are unused
+func express_motion():
 	self.max_deviation = grid.size * GROW_SHRINK_AMOUNT_WHILE_MOVING
 
 
 # Restore deviation to original amount
-func _on_smooth_move_completed(_object, _key): # _vars are unused
+# func _on_smooth_move_completed(_object, _key): # _vars are unused
+func express_standing_still(): # _vars are unused
 	self.max_deviation = grid.size * GROW_SHRINK_AMOUNT
 
 

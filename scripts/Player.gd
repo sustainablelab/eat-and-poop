@@ -20,6 +20,9 @@ onready var player_block: Block = Block.new()
 # export var color: Color = ColorN("lightsalmon", 1) # color, alpha
 var color: Color = ColorN("lightsalmon", 1) # color, alpha
 
+# MOVEMENT
+onready var grid: Grid = Grid.new()
+onready var smooth_move: Tween = Tween.new()
 
 func _ready() -> void:
 	add_child(player_block)
@@ -31,11 +34,29 @@ func _ready() -> void:
 	player_block.top_left = Vector2(x,y)
 	# Set player's color (set in the editor: Player - Inspector)
 	player_block.color = color
+
+	# OLD MOVEMENT (When Block handled movement)
 	# Detect tween start/stop to ignore inputs while moving.
 	# (`connect()` returns 0: throw away return value in a '_var')
+	# var _ret: int
+	# _ret = player_block.smooth_move.connect("tween_started", self, "_on_smooth_move_started")
+	# _ret = player_block.smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
+
+	# SETUP MOVEMENT
+	# Use a tween to animate moving in the grid.
+	add_child(smooth_move)
+	# Detect tween start/stop to change wobble effect while moving.
+	# (`connect()` returns 0: throw away return value in a '_var')
 	var _ret: int
-	_ret = player_block.smooth_move.connect("tween_started", self, "_on_smooth_move_started")
-	_ret = player_block.smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
+	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
+	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
+	# TODO: decrease speed as the player gets bigger
+	# self.speed = 0.1
+	self.speed = grid.size / 200.0
+	if self.speed > 0.1:
+		self.speed = 0.1
+	if self.speed < 0.05:
+		self.speed = 0.05
 
 
 # ------------------------------------------------------
@@ -46,10 +67,36 @@ func _process(_delta):
 	if not is_moving:
 		for motion in ui_inputs: # `for` iterates over dict keys
 			if Input.is_action_pressed(motion):
-				player_block.move(ui_inputs[motion])
+				# player_block.move(ui_inputs[motion])
+				self.move(ui_inputs[motion])
 				# DEBUGGING
 				# print(Input.get_joy_name(self.device_num))
 				# print(Input.get_joy_axis(self.device_num, 0))
+
+# Update position when the Player moves its block.
+var speed: float
+
+func move(direction: Vector2 ) -> void:
+	# Move one tile. Basically do this:
+	# self.position += direction * grid.size
+	# But use a Tween for animating motion between tiles.
+
+	# _done is true when Tween.blah() is done.
+	# I store return values in "_vars" to avoid Debugger warnings.
+
+	var _done: bool
+	_done = smooth_move.interpolate_property(
+		self, # object
+		"position", # property name
+		self.position, # start
+		self.position + direction * grid.size, # stop
+		self.speed, # time it takes to move in seconds
+		Tween.TRANS_SINE,
+		Tween.EASE_IN_OUT,
+		0) # delay
+
+	_done = smooth_move.start()
+
 
 # Assign a direction to each arrow press.
 # Actual InputMap is defined by Parent.
@@ -65,6 +112,7 @@ var ui_inputs = {
 # Track when the movement tween animation is happening.
 func _on_smooth_move_started(_object, _key): # _vars are unused
 	self.is_moving = true
+	self.player_block.express_motion()
 
 	# DEBUGGING
 	print("tween start:")
@@ -74,6 +122,7 @@ func _on_smooth_move_started(_object, _key): # _vars are unused
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
 	self.is_moving = false
+	self.player_block.express_standing_still()
 
 	# DEBUGGING
 	print("tween stop:")
