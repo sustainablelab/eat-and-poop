@@ -18,10 +18,16 @@ _global_script_classes=[ {
 "class": "Grid",
 "language": "GDScript",
 "path": "res://scripts/Grid.gd"
+}, {
+"base": "Area2D",
+"class": "HitBox",
+"language": "GDScript",
+"path": "res://scripts/HitBox.gd"
 } ]
 _global_script_class_icons={
 "Block": "",
-"Grid": ""
+"Grid": "",
+"HitBox": ""
 }
 
 [application]

@@ -1,6 +1,9 @@
 class_name Block
 extends Node2D
 
+# TODO: add hook for Parent to tell Block to `express_pooping()`,
+# similar idea to `express_motion()`
+
 # The fundamental square parameters use setters.
 # The setters call update(): anytime these fundamental square
 # parameters are written, update() redraws the square.

@@ -1,5 +1,10 @@
 extends Node2D # change to Spatial
 
+# TODO: detect collisions with other players
+
+# TODO: time standing still, tell `player_block` to `express_pooping()` when
+# timer is up, similar idea to `express_motion`.
+#
 # JOYSTICK
 # Hardcode a default joystick device_num for testing.
 # Parent overrides `device_num` when it instantiates Player and
@@ -19,6 +24,9 @@ var is_moving: bool = false # true when player_block is moving between tiles
 # GDScript compiler knows `Block` is a class because of `class_name` in `Block.gd` 
 onready var player_block: Block = Block.new()
 # Add `Block` as a child node in `_ready()` with `add_child(player_block)`.
+onready var player_hitbox: HitBox = HitBox.new()
+# Add `HitBox` as a child node in `_ready()` with `add_child(player_hitbox)`.
+
 
 # COLOR
 # Hardcode a color for testing.
@@ -31,20 +39,19 @@ var color: Color = ColorN("magenta", 1) # color, alpha
 
 
 func _ready() -> void:
+	# Hardcode player's starting position for testing.
+	self.position = Vector2(100.0,100.0)
+
+	add_child(player_hitbox)
+	player_hitbox.half_extents = Vector2(grid.size/2.0, grid.size/2.0)
+	print(player_hitbox.half_extents)
+	print(player_hitbox.collision_area.shape)
+
 	add_child(player_block)
 	# Player size is determined by Grid.size
 	# Player starting position is determined by Parent.
-	# Hardcode player's starting position for testing.
-	self.position = Vector2(100.0,100.0)
 	# Set player's color (set in the editor: Player - Inspector)
 	player_block.color = color
-
-	# OLD MOVEMENT (When Block handled movement)
-	# Detect tween start/stop to ignore inputs while moving.
-	# (`connect()` returns 0: throw away return value in a '_var')
-	# var _ret: int
-	# _ret = player_block.smooth_move.connect("tween_started", self, "_on_smooth_move_started")
-	# _ret = player_block.smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 
 	# SETUP MOVEMENT
 	# Use a tween to animate moving in the grid.
@@ -61,6 +68,10 @@ func _ready() -> void:
 		self.speed = 0.1
 	if self.speed < 0.05:
 		self.speed = 0.05
+
+	# SETUP COLLISIONS
+	# Detect collisions.
+	_ret = player_hitbox.connect("area_entered", self, "_on_area_entered")
 
 
 # ------------------------------------------------------
@@ -119,9 +130,9 @@ func _on_smooth_move_started(_object, _key): # _vars are unused
 	self.player_block.express_motion()
 
 	# DEBUGGING
-	print("tween start:")
-	print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
-	print("\tself.position = {v}".format({"v":self.position}))
+	# print("tween start:")
+	# print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
+	# print("\tself.position = {v}".format({"v":self.position}))
 
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
@@ -129,6 +140,10 @@ func _on_smooth_move_completed(_object, _key): # _vars are unused
 	self.player_block.express_standing_still()
 
 	# DEBUGGING
-	print("tween stop:")
-	print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
-	print("\tself.position = {v}".format({"v":self.position}))
+	# print("tween stop:")
+	# print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
+	# print("\tself.position = {v}".format({"v":self.position}))
+
+
+func _on_area_entered(area):
+	print("{a} entered by {b}:".format({"a":self.player_hitbox, "b":area}))

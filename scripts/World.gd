@@ -143,7 +143,20 @@ func add_player(player_index: int) -> void:
 	# Randomize player's starting x,y position.
 	# TODO: constrain random_position to the grid
 	# player.player_block.top_left = random_position()
-	player.position = random_position()
+	
+	# TESTING:
+	# Random positions are annoying while testing.
+	# Hardcode positions for player_index 0 and 1
+	if player_index == 0:
+		player.position = Vector2(100,100)
+	elif player_index == 1:
+		player.position = Vector2(140,100)
+	else:
+		player.position = random_position()
+
+	# Comment out the above when done testing.
+	# And uncomment the line below.
+	# player.position = random_position()
 
 	# TODO: index at random into the list of colors so that I'm
 	# not limited to 4 players.
