@@ -11,20 +11,16 @@ var square_points: PoolVector2Array setget set_square_points
 
 # Randomize the square points for a wobble effect.
 var square_wobbles: bool = true
-# Time it takes to move in seconds
-# TODO: decrease speed as the player gets bigger
-# var speed: float = 0.2 # bigger number = slower
-# var speed: float
-# self.speed = grid.size / 200.0
 var wobble_period: float = 0.01 # bigger number = slower
 
 # growth_shrink_amount sets how much to grow/shrink by: 0 == no growth
 # range: 0.0:1.0
-# const GROW_SHRINK_AMOUNT: float = 0.02
-var GROW_SHRINK_AMOUNT: float
+# const WOBBLE_AMOUNT: float = 0.02
+var WOBBLE_AMOUNT: float
+var SHAKE_AMOUNT: float
 # Increase amount while moving to communicate player is active.
-# const GROW_SHRINK_AMOUNT_WHILE_MOVING: float = 0.05
-var GROW_SHRINK_AMOUNT_WHILE_MOVING: float
+# const WOBBLE_AMOUNT_WHILE_MOVING: float = 0.05
+var WOBBLE_AMOUNT_WHILE_MOVING: float
 
 # TIP:
 # Slower wobbles look more like an object in motion.
@@ -32,14 +28,12 @@ var GROW_SHRINK_AMOUNT_WHILE_MOVING: float
 # Slower wobbles look better as smaller wobbles.
 # Faster wobbles can get away with larger wobbles.
 
-# var max_growth: float
-# var max_shrink: float
-var max_deviation: float
+var max_wobble_deviation: float
+var max_shake_deviation: float
 # Grow/Shrink by a random amount
 var rng = RandomNumberGenerator.new()
 
 onready var grid: Grid = Grid.new()
-# onready var smooth_move: Tween = Tween.new()
 
 func _ready():
 	add_child(grid)
@@ -48,28 +42,16 @@ func _ready():
 	self.square_points = normal_square()
 	# Dividing by grid.size exaggerates wobbles for smaller grids
 	# which is good for overcoming truncation to pixel number.
-	GROW_SHRINK_AMOUNT = 0.5 / grid.size
-	# GROW_SHRINK_AMOUNT = 4.0 / grid.size
-	GROW_SHRINK_AMOUNT_WHILE_MOVING = GROW_SHRINK_AMOUNT * 3.0
-	# max_growth = grid.size * (1 + GROW_SHRINK_AMOUNT)
-	# max_shrink = grid.size * (1 - GROW_SHRINK_AMOUNT)
+	WOBBLE_AMOUNT = 0.5 / grid.size
+	# WOBBLE_AMOUNT = 4.0 / grid.size
+	SHAKE_AMOUNT = 1.0 / grid.size
+	WOBBLE_AMOUNT_WHILE_MOVING = WOBBLE_AMOUNT * 3.0
 	# Player's shape deviates with a wobbly effecet.
-	max_deviation = grid.size * GROW_SHRINK_AMOUNT
+	max_wobble_deviation = grid.size * WOBBLE_AMOUNT
+	# Player's shape deviates with a shaky effecet.
+	max_shake_deviation = grid.size * SHAKE_AMOUNT
 	# Seed a random number generator for wobbling.
 	rng.randomize() # setup the generator from a time-based seed
-	## Use a tween to animate moving in the grid.
-	# add_child(smooth_move)
-	# # Detect tween start/stop to change wobble effect while moving.
-	# # (`connect()` returns 0: throw away return value in a '_var')
-	# var _ret: int
-	# _ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
-	# _ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
-	# TODO: decrease speed as the player gets bigger
-	# self.speed = grid.size / 200.0
-	# if self.speed > 0.1:
-	# 	self.speed = 0.1
-	# if self.speed < 0.05:
-	# 	self.speed = 0.05
 
 # Animate the wobble effect.
 # Use `delta_sum` to detect when a wobble period elapses.
@@ -86,8 +68,8 @@ func _process(delta):
 	if square_wobbles:
 		delta_sum += delta
 		if delta_sum >= self.wobble_period:
+			# self.square_points = random_shaky_square()
 			self.square_points = random_wobbly_square()
-			# update() # update the _draw() stuff
 			# Reset the wobble period timer
 			delta_sum = 0
 
@@ -96,19 +78,33 @@ func _draw() -> void:
 	draw_square()
 
 
+func set_square_points(p: PoolVector2Array) -> void:
+	# This is the important property.
+	# I write this one all the time.
+	# Then this triggers the redraw with its `update()`.
+	square_points = p
+	update()
+
+
 func set_top_left(xy: Vector2) -> void:
+	# So far I never write top_left. It sits at (0,0) all game
+	# long. The block moves around the screen because of the
+	# Parent node's position.
+	#
+	# But I'm leaving this here for future effects.
+	# 1) Visually shift the player off the tile grid
+	# without affecting the `position` of Sibling nodes.
+	# 2) Use with `self.length` for shrinking/growing.
 	top_left = xy
-	# print("top_left: {val}".format({"val":top_left}))
 	update()
 
 
 func set_length(d: float) -> void:
+	# Like top_left, I never write length.
+	# `length` is `grid.size` all game long.
+	# But I'm leaving this here for future effects.
+	# 1) Use with `self.top_left` for shrinking/growing.
 	length = d
-	update()
-
-
-func set_square_points(p: PoolVector2Array) -> void:
-	square_points = p
 	update()
 
 
@@ -116,54 +112,48 @@ func set_color(c: Color) -> void:
 	color = c
 	update()
 
-## Update position when the Player moves its block.
-#func move(direction: Vector2 ) -> void:
-#	# Choppy motion without Tween:
-#	#self.top_left += direction * grid.size
 
-#	# Smooth motion with Tween:
-
-#	# _done is true when Tween.blah() is done.
-#	# I store return values in "_vars" to avoid Debugger warnings.
-#	var _done: bool
-#	_done = smooth_move.interpolate_property(
-#		self, # object
-#		"top_left", # property name
-#		self.top_left, # start
-#		self.top_left + direction * grid.size, # stop
-#		self.speed, # time it takes to move in seconds
-#		Tween.TRANS_SINE,
-#		Tween.EASE_IN_OUT,
-#		0) # delay
-
-#	_done = smooth_move.start()
-
-
-# Use a larger deviation in draw_square points to emphasize movement
-# func _on_smooth_move_started(_object, _key): # _vars are unused
+# Larger deviation communicates block is in motion.
 func express_motion():
-	self.max_deviation = grid.size * GROW_SHRINK_AMOUNT_WHILE_MOVING
+	self.max_wobble_deviation = grid.size * WOBBLE_AMOUNT_WHILE_MOVING
 
 
-# Restore deviation to original amount
-# func _on_smooth_move_completed(_object, _key): # _vars are unused
-func express_standing_still(): # _vars are unused
-	self.max_deviation = grid.size * GROW_SHRINK_AMOUNT
+# Restore deviation to original amount when standing still.
+func express_standing_still():
+	self.max_wobble_deviation = grid.size * WOBBLE_AMOUNT
 
 
-# I wrote `draw_square`.
-# I learned from the example here on "Custom drawing in 2D":
+# All cool art/animation is custom drawing in 2D -- see example
+# here on "Custom drawing in 2D":
 # https://docs.godotengine.org/en/stable/tutorials/2d/custom_drawing_in_2d.html
 
-# Draw a square. Use units of pixels.
-# Usage: Call `draw_square()` in `_draw()`.
-# Example: draw_square(
-#					Vector2(10.0, 10.0),
-#					10.0,
-#					ColorN("lightsalmon", 1),
-#					)
 
-# Generate the points for a normal square.
+# Usage: Call `draw_square()` in `_draw()`.
+func draw_square() -> void:
+	# Call built-in polygon drawing command
+	# Use whatever the current values of square_points and color are.
+	# `square_points` is set to a "normal_square" onready.
+	# If the `square_wobbles`, `square_points` is updated each
+	# `wobble_period`.
+	draw_colored_polygon(self.square_points, self.color)
+
+
+# What animation is the square doing?
+# This is determined by square_points.
+# No animation, just a square:
+#	self.square_points = normal_square()
+# Wobbly square:
+#	self.square_points = random_wobbly_square()
+# Shaky square:
+#	self.square_points = random_shaky_square()
+# TODO: figure out how to setup animations for composability.
+# Serially assigning square_points does not work.
+# For example, this makes the square shake only:
+#	self.square_points = random_wobbly_square()
+#	self.square_points = random_shaky_square()
+
+# Generate the vertices for a normal square.
+# Use units of pixels.
 func normal_square() -> PoolVector2Array:
 	# Define the vertices
 	var points: PoolVector2Array = PoolVector2Array()
@@ -177,6 +167,28 @@ func normal_square() -> PoolVector2Array:
 	assert(not points.empty()) # got me some points
 	return points
 
+
+func random_shaky_square() -> PoolVector2Array:
+	# Define the vertices.
+	# Start with an empty list of points.
+	var points: PoolVector2Array = PoolVector2Array()
+	var x:float = self.top_left.x
+	var y:float = self.top_left.y
+	var random: float
+	# Randomize vertex position with a Gaussian distribution.
+	# random = rng.randfn( # normally-distributed
+	# 		0.0, # mean
+	# 		max_shake_deviation # deviation
+	# 		)
+	# SHAKE: use the same random number for all points.
+	random = rng.randfn(0.0, max_shake_deviation)
+	points.append(Vector2(x+random,y+random))
+	points.append(Vector2(x+random,y+random+self.length))
+	points.append(Vector2(x+random+self.length,y+random+self.length))
+	points.append(Vector2(x+random+self.length,y+random))
+	return points
+
+
 # Generate the points for a wobbly square.
 func random_wobbly_square() -> PoolVector2Array:
 	# Define the vertices.
@@ -185,32 +197,19 @@ func random_wobbly_square() -> PoolVector2Array:
 	var x:float = self.top_left.x
 	var y:float = self.top_left.y
 	var random: float
-	# Randomize to a range?
-	# var random_amount = rng.randf_range(max_shrink, max_growth)
-	# Or randomize to a Gaussian distribution?
+	# Randomize vertex position with a Gaussian distribution.
 	# random = rng.randfn( # normally-distributed
 	# 		0.0, # mean
-	# 		max_deviation # deviation
+	# 		max_wobble_deviation # deviation
 	# 		)
-	# To make the square shake, use the same random number for
-	# all points.
-	# To make the square wobble, generate a new random number for
-	# each point.
-	random = rng.randfn(0.0, max_deviation)
+	# WOBBLE: generate a new random number for each point.
+	random = rng.randfn(0.0, max_wobble_deviation)
 	points.append(Vector2(x+random,y+random))
-	random = rng.randfn(0.0, max_deviation)
+	random = rng.randfn(0.0, max_wobble_deviation)
 	points.append(Vector2(x+random,y+random+self.length))
-	random = rng.randfn(0.0, max_deviation)
+	random = rng.randfn(0.0, max_wobble_deviation)
 	points.append(Vector2(x+random+self.length,y+random+self.length))
-	random = rng.randfn(0.0, max_deviation)
+	random = rng.randfn(0.0, max_wobble_deviation)
 	points.append(Vector2(x+random+self.length,y+random))
 	return points
-
-func draw_square() -> void:
-	# Call built-in polygon drawing command
-	# Use whatever the current values of square_points and color are.
-	# `square_points` is set to a "normal_square" onready.
-	# If the `square_wobbles`, `square_points` is updated each
-	# `wobble_period`.
-	draw_colored_polygon(self.square_points, self.color)
 

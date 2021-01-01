@@ -86,6 +86,7 @@ func random_position() -> Vector2:
 
 	return random_tile * grid.size
 
+
 func remove_player(player_index: int) -> void:
 	# TODO: Remove the player. Or show in some way that the
 	# player is inactive.
@@ -96,6 +97,7 @@ func remove_player(player_index: int) -> void:
 	# When the joystick reconnects, control is restored.
 	players[player_index].player_block.color.a = 0.3
 	pass
+
 
 func add_player(player_index: int) -> void:
 	# Add a player to the game.
