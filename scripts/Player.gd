@@ -1,37 +1,41 @@
 extends Node2D # change to Spatial
-# TODO: use Spatial translation() instead of hard-coded `top_left` coordinates
 
+# JOYSTICK
 # Hardcode a default joystick device_num for testing.
 # Parent overrides `device_num` when it instantiates Player and
 # add it as a child node.
 var device_num: int = 0 # default to device 0
 
-# I don't need to use the editor to add `Block` as a child node
-# of `Player`. I do this in the code instead!
-
-var is_moving: bool = false # true when player_block is moving between tiles
-
-# Create a player as an instance of Block.
-# Add node in `_ready()` with `add_child(player_block)`.
-onready var player_block: Block = Block.new()
-
-# Play with color in Godot editor.
-# I can "force" this back to lightsalmon by editing Player.tscn.
-# export var color: Color = ColorN("lightsalmon", 1) # color, alpha
-var color: Color = ColorN("lightsalmon", 1) # color, alpha
-
 # MOVEMENT
 onready var grid: Grid = Grid.new()
 onready var smooth_move: Tween = Tween.new()
+# Ignore joystick motions while movement animation is underway.
+var is_moving: bool = false # true when player_block is moving between tiles
+
+# CHILD NODE: BLOCK
+# I don't need to use the editor to add `Block` as a child node
+# of `Player`. I do this in the code instead!
+# Create a player as an instance of Block.
+# GDScript compiler knows `Block` is a class because of `class_name` in `Block.gd` 
+onready var player_block: Block = Block.new()
+# Add `Block` as a child node in `_ready()` with `add_child(player_block)`.
+
+# COLOR
+# Hardcode a color for testing.
+# Parent overrides color when instantiating player.
+# `export` color to play with color in the Godot editor.
+# If exporting, the hardocoded color is set by Godot editor.
+# Edit Player.tscn to set this default in code.
+# export var color: Color = ColorN("lightsalmon", 1) # color, alpha
+var color: Color = ColorN("magenta", 1) # color, alpha
+
 
 func _ready() -> void:
 	add_child(player_block)
 	# Player size is determined by Grid.size
 	# Player starting position is determined by Parent.
 	# Hardcode player's starting position for testing.
-	var x:float = 100.0
-	var y:float = 100.0
-	player_block.top_left = Vector2(x,y)
+	self.position = Vector2(100.0,100.0)
 	# Set player's color (set in the editor: Player - Inspector)
 	player_block.color = color
 

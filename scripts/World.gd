@@ -1,6 +1,7 @@
 extends Node2D
 
 var game_window: Rect2 # Game window
+onready var grid: Grid = Grid.new()
 
 # Parent sets `num_players` based on number of connected joysticks.
 # Parent adjusts `num_players` when number of connected joysticks
@@ -46,15 +47,44 @@ func _ready() -> void:
 	# print(game_window.end.x)
 
 
+func game_grid() -> Rect2:
+	# Divide game window into squares of side-length grid.size.
+	# Return a `Rect2` that describes the game window as a grid.
+	# Example:
+	# If game_window is (0,0,1360,768) and tiles are 20 x 20
+	# then game_grid is (0,0,67,37)
+	# (0,0) is the top-left corner of the top-left-most tile.
+	# (67,37) is the top-left corner of the bottom-right-most tile.
+	#
+	# Why is it end - 1?
+	# In this example, (1360,768)/20 = (68,38).
+	# This is the bottom-right corner of the screen.
+	# The tile with its top-left corner starting at the
+	# bottom-right corner of the screen is a tile that falls off
+	# the screen!
+	var game_grid := Rect2()
+	game_grid.position.x = floor(game_window.position.x)
+	game_grid.position.y = floor(game_window.position.y)
+	game_grid.end.x = floor(game_window.end.x / grid.size) - 1
+	game_grid.end.y = floor(game_window.end.y / grid.size) - 1
+	print(game_grid)
+
+	return game_grid
+
+
 func random_position() -> Vector2:
-	return Vector2(
-			rng.randf_range( # random x
-					game_window.position.x,
-					game_window.end.x),
-			rng.randf_range( # random y
-					game_window.position.y,
-					game_window.end.y)
+	# Pick a random position quantized to the grid.
+	var game_grid = game_grid()
+	var random_tile = Vector2(
+			rng.randi_range( # random x
+					game_grid.position.x,
+					game_grid.end.x),
+			rng.randi_range( # random y
+					game_grid.position.y,
+					game_grid.end.y)
 					)
+
+	return random_tile * grid.size
 
 func remove_player(player_index: int) -> void:
 	# TODO: Remove the player. Or show in some way that the
@@ -110,7 +140,8 @@ func add_player(player_index: int) -> void:
 
 	# Randomize player's starting x,y position.
 	# TODO: constrain random_position to the grid
-	player.player_block.top_left = random_position()
+	# player.player_block.top_left = random_position()
+	player.position = random_position()
 
 	# TODO: index at random into the list of colors so that I'm
 	# not limited to 4 players.
