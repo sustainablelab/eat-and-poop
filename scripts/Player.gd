@@ -1,4 +1,41 @@
-extends Node2D # change to Spatial
+# Player
+# ├─ Tween (Godot built-in for motion)
+# ├─ RayCast2D (Godot built-in for detecting if tiles are empty)
+# ├─ Grid (Grid.gd -- set Grid size)
+# ├─ HitBox (HitBox.gd -- define a collision area)
+# └─ Block (Block.gd -- what Player looks like on the screen)
+#
+# ADD CHILD NODES
+# I don't use the Godot editor to add Child nodes to `Player`.
+# I do this in the code instead.
+# See the docs for "creating nodes":
+# https://docs.godotengine.org/en/stable/getting_started/step_by_step/scripting_continued.html?highlight=_ready#creating-nodes
+# There are two steps:
+# 1. Define Player property as instance of Child node class with `new()`
+# 2. Call add_child() in _ready().
+# CHILD NODE CLASSES
+# For classes I define in `.gd` scripts, the GDScript compiler knows about the
+# class because of the script's first line: `class_name`.
+# USE PLAYER
+# Player has no class_name because Player is a scene!
+# Assign Player.gd (this script) to scene Player.tscn in Godot editor.
+# The Parent makes Player a Child node in code.
+# See the docs for "instancing scenes":
+# https://docs.godotengine.org/en/stable/getting_started/step_by_step/scripting_continued.html?highlight=_ready#instancing-scenes
+#
+# Three steps:
+# 1. Load the Player scene:
+#	const player_scene = preload("res://scenes/Player.tscn")
+# 2. Instantiate a player: (like the .new() in the previous)
+#	var player1 = player_scene.instance()
+# 3. Add as a child node:
+#	add_child(player1)
+#
+# Player is a scene, not just a script with a class name.
+# Scenes have execution benefits under the hood.
+# And as a scene, it is a stand-alone game component I can test with `F6`.
+
+extends Node2D
 
 # TODO: detect collisions with other players
 
@@ -17,16 +54,14 @@ onready var smooth_move: Tween = Tween.new()
 # Ignore joystick motions while movement animation is underway.
 var is_moving: bool = false # true when player_block is moving between tiles
 
-# CHILD NODE: BLOCK
-# I don't need to use the editor to add `Block` as a child node
-# of `Player`. I do this in the code instead!
-# Create a player as an instance of Block.
-# GDScript compiler knows `Block` is a class because of `class_name` in `Block.gd` 
-onready var player_block: Block = Block.new()
-# Add `Block` as a child node in `_ready()` with `add_child(player_block)`.
-onready var player_hitbox: HitBox = HitBox.new()
-# Add `HitBox` as a child node in `_ready()` with `add_child(player_hitbox)`.
+onready var player_block: Block = Block.new() # see add_child(player_block)
+onready var player_hitbox: HitBox = HitBox.new() # see add_child(player_hitbox)
+onready var player_ray: RayCast2D = RayCast2D.new() # see add_child(player_ray)
 
+# NAME
+# Hardcode a name for testing.
+# Parent overrides name when instantiating player.
+var player_name: String = "player_name"
 
 # COLOR
 # Hardcode a color for testing.
@@ -37,21 +72,43 @@ onready var player_hitbox: HitBox = HitBox.new()
 # export var color: Color = ColorN("lightsalmon", 1) # color, alpha
 var color: Color = ColorN("magenta", 1) # color, alpha
 
+# Hardcode player's starting position for testing.
+var start_position: Vector2 = Vector2(100.0, 100.0)
 
 func _ready() -> void:
-	# Hardcode player's starting position for testing.
-	self.position = Vector2(100.0,100.0)
+	print("Running Player._ready()...")
+	# Use starting position set by Parent Node.
+	# This uses the default start_position when testing Player.
+	position = start_position
 
+	# Setup the HitBox: override HitBox size (half_extents)
+	# player_hitbox.half_extents = Vector2(grid.size/1.5, grid.size/1.5)
+	player_hitbox.half_extents = Vector2(grid.size/2.5, grid.size/2.5)
+	player_hitbox.area_name = player_name
 	add_child(player_hitbox)
-	player_hitbox.half_extents = Vector2(grid.size/2.0, grid.size/2.0)
-	print(player_hitbox.half_extents)
-	print(player_hitbox.collision_area.shape)
+	print("hitbox half_extents: {h}".format({"h":player_hitbox.half_extents}))
 
-	add_child(player_block)
+	# Setup RayCast2D
+	# Enable Area2D detection. Defaults to False.
+	player_ray.collide_with_areas = true
+	# Ignore colliding with Player's own Area2D!
+	player_ray.add_exception(player_hitbox)
+	# Enable ray cast? This seems to make no difference.
+	# player_ray.enabled = true
+	# player_ray.enabled = false # default
+	add_child(player_ray)
+
 	# Player size is determined by Grid.size
-	# Player starting position is determined by Parent.
-	# Set player's color (set in the editor: Player - Inspector)
+	# Player starting position and color is determined by Parent.
+	# Why do I code color here and not position?
+	# Position is a property of Player.
+	# For testing, I default to 0,0.
+	# But color is a property of Player Child Node: Block.
+	# And I don't want Parent of Player to know that Block exists.
+	# So Player passes its color property to whichever children need to know
+	# about color.
 	player_block.color = color
+	add_child(player_block)
 
 	# SETUP MOVEMENT
 	# Use a tween to animate moving in the grid.
@@ -62,28 +119,29 @@ func _ready() -> void:
 	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 	# TODO: decrease speed as the player gets bigger
-	# self.speed = 0.1
-	self.speed = grid.size / 200.0
-	if self.speed > 0.1:
-		self.speed = 0.1
-	if self.speed < 0.05:
-		self.speed = 0.05
+	# speed = 0.1
+	speed = grid.size / 200.0
+	if speed > 0.1:
+		speed = 0.1
+	if speed < 0.05:
+		speed = 0.05
 
 	# SETUP COLLISIONS
 	# Detect collisions.
 	_ret = player_hitbox.connect("area_entered", self, "_on_area_entered")
 
 
-# ------------------------------------------------------
-# | Move player_block based on keyboard/joystick input |
-# ------------------------------------------------------
+# ---------------------
+# | Move player_block |
+# ---------------------
 func _process(_delta):
 	# Ignore events while Tween animates player_block moving.
 	if not is_moving:
+		# Move based on keyboard/joystick input
 		for motion in ui_inputs: # `for` iterates over dict keys
 			if Input.is_action_pressed(motion):
 				# player_block.move(ui_inputs[motion])
-				self.move(ui_inputs[motion])
+				move(ui_inputs[motion])
 				# DEBUGGING
 				# print(Input.get_joy_name(self.device_num))
 				# print(Input.get_joy_axis(self.device_num, 0))
@@ -91,9 +149,59 @@ func _process(_delta):
 # Update position when the Player moves its block.
 var speed: float
 
+func _draw() -> void:
+	draw_line(
+		player_ray.position, # from
+		player_ray.cast_to, # to
+		color # color
+		)
+
+func ray_viz() -> void:
+	# Draw a line visualizing where the RayCast is.
+	update()
+
 func move(direction: Vector2 ) -> void:
+	# TODO:
+	# Add code to draw the RayCast2D to help with debugging this weird behavior!
+	var destination
+	destination = position + (direction * grid.size)
+	print("Player position: {p}".format({"p":position}))
+	print("Player destination: {d}".format({"d":destination}))
+	# TODO: ray cast to test for collision before moving
+	player_ray.cast_to = destination
+	# print("Ray position: {p}".format({"p":player_ray.position}))
+	# print("Ray destination: {d}".format({"d":player_ray.cast_to}))
+	ray_viz()
+	player_ray.force_raycast_update()
+
+	var is_colliding = player_ray.is_colliding()
+	print("Expect collision? {b}".format({"b":is_colliding}))
+
+	if is_colliding:
+		var collision_point: Vector2 = player_ray.get_collision_point()
+		print("Collision point: {p}".format({"p":collision_point}))
+		print("Collision normal: {n}".format({"n":player_ray.get_collision_normal()}))
+		print("Collider: {c}".format({"c":player_ray.get_collider().area_name}))
+		print("Collider size: {c}".format({"c":player_ray.get_collider().half_extents*2}))
+
+		# if position == collision_point:
+		# 	# Ignore collision when another player is somehow in the square
+		# 	# this player is already in.
+		# 	pass
+		# else:
+			# print("Collision: can't go to: {d}".format({"d":destination}))
+
+		print("Collision: can't go to: {d}".format({"d":destination}))
+		# Do a motion tween, but don't go anywhere.
+		destination = position
+
+		# Reset collision to false? Nope, doesn't help.
+		# player_ray.cast_to = position
+		# player_ray.force_raycast_update()
+
+	# Next tile is available, go ahead and move there.
 	# Move one tile. Basically do this:
-	# self.position += direction * grid.size
+	# position += direction * grid.size
 	# But use a Tween for animating motion between tiles.
 
 	# _done is true when Tween.blah() is done.
@@ -103,9 +211,9 @@ func move(direction: Vector2 ) -> void:
 	_done = smooth_move.interpolate_property(
 		self, # object
 		"position", # property name
-		self.position, # start
-		self.position + direction * grid.size, # stop
-		self.speed, # time it takes to move in seconds
+		position, # start
+		destination, # stop
+		speed, # time it takes to move in seconds
 		Tween.TRANS_SINE,
 		Tween.EASE_IN_OUT,
 		0) # delay
@@ -126,8 +234,8 @@ var ui_inputs = {
 
 # Track when the movement tween animation is happening.
 func _on_smooth_move_started(_object, _key): # _vars are unused
-	self.is_moving = true
-	self.player_block.express_motion()
+	is_moving = true
+	player_block.express_motion()
 
 	# DEBUGGING
 	# print("tween start:")
@@ -136,8 +244,8 @@ func _on_smooth_move_started(_object, _key): # _vars are unused
 
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
-	self.is_moving = false
-	self.player_block.express_standing_still()
+	is_moving = false
+	player_block.express_standing_still()
 
 	# DEBUGGING
 	# print("tween stop:")
@@ -146,4 +254,25 @@ func _on_smooth_move_completed(_object, _key): # _vars are unused
 
 
 func _on_area_entered(area):
-	print("{a} entered by {b}:".format({"a":self.player_hitbox, "b":area}))
+	# Get thrown back if standing still.
+	if not is_moving:
+		# Placeholder: always move right
+		# self.move(Vector2.RIGHT)
+		pass
+		# TODO: how do I find out the Vector2 of the attacker?
+		# Use RayCast2D: get_collision_normal
+
+	# Only print a message for the player trying to move.
+	# DEBUGGING
+	print("{a} entered by {b}.".format({"a":player_hitbox.area_name, "b":area.area_name}))
+	# Example:
+	# lightseagreen player moves into square occupied by magenta
+	#
+	#	magenta entered by lightseagreen.
+	#	lightseagreen entered by magenta.
+	#
+	# If magenta entered lightseagreen's square, the order flips:
+	#
+	#	lightseagreen entered by magenta.
+	#	magenta entered by lightseagreen.
+	#

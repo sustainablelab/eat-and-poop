@@ -39,9 +39,14 @@ var rng = RandomNumberGenerator.new()
 onready var grid: Grid = Grid.new()
 
 func _ready():
-	add_child(grid)
+	# DEBUGGING
+	print("Running Block._ready()...")
+
 	# Player starts as a normal square shape.
-	self.length = grid.size
+	# Player size matches grid tile size.
+	length = grid.size
+	# Center player artwork about player's position.
+	top_left -= Vector2(length/2.0, length/2.0)
 	self.square_points = normal_square()
 	# Dividing by grid.size exaggerates wobbles for smaller grids
 	# which is good for overcoming truncation to pixel number.
@@ -90,9 +95,10 @@ func set_square_points(p: PoolVector2Array) -> void:
 
 
 func set_top_left(xy: Vector2) -> void:
-	# So far I never write top_left. It sits at (0,0) all game
-	# long. The block moves around the screen because of the
-	# Parent node's position.
+	# So far I never write top_left with this setter.
+	# It sits at it's starting position all game long.
+	# The block moves around the screen because of the Parent
+	# node's position.
 	#
 	# But I'm leaving this here for future effects.
 	# 1) Visually shift the player off the tile grid
@@ -103,7 +109,7 @@ func set_top_left(xy: Vector2) -> void:
 
 
 func set_length(d: float) -> void:
-	# Like top_left, I never write length.
+	# Like top_left, I never write length with this setter.
 	# `length` is `grid.size` all game long.
 	# But I'm leaving this here for future effects.
 	# 1) Use with `self.top_left` for shrinking/growing.

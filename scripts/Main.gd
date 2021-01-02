@@ -12,6 +12,9 @@ var world: Node2D
 
 func _ready() -> void:
 	# DEBUGGING
+	print("Running Main._ready()...")
+
+	# DEBUGGING
 	# print(Input.get_connected_joypads())
 
 	# Load the World scene

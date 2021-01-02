@@ -24,12 +24,26 @@ var num_players: int = 4 # number of joysticks connected
 var players: Array = [] # array to hold player instances
 var input_maps: Array = [] # array to hold input_map dict for each player
 
+
 var rng = RandomNumberGenerator.new()
 
 # Load the Player scene
 const player_scene = preload("res://scenes/Player.tscn")
 
+# _draw() runs once, sometime shortly after _ready() runs
+func _draw() -> void:
+	# gridlines()
+	for point in gridpoints():
+		draw_circle(
+			point, # position
+			grid.size/6.0, # radius
+			ColorN("black", 0.3) # color 
+			)
+
 func _ready() -> void:
+	# DEBUGGING
+	print("Running World._ready()...")
+
 	game_window = get_viewport_rect()
 
 	# Seed a random number generator for positioning blocks.
@@ -46,6 +60,34 @@ func _ready() -> void:
 	# print(game_window.position.x)
 	# print(game_window.end.x)
 
+# func gridlines() -> void:
+# 	# Draw grid lines
+# 	# Define the endpoints.
+# 	# PLACEHOLDER:
+# 	draw_line(
+# 		Vector2(20,100), # from
+# 		Vector2(20,800), # to
+# 		ColorN("magenta", 1) # color
+# 		)
+
+
+func gridpoints() -> Array:
+	# Return grid intersections as an array of Vector2 points
+	var game_grid = game_grid()
+	# Add 2:
+	# Add 1 because num cols is end.x + 1 and num rows is end.y + 1
+	# Add another 1 to get final set of points at window bottom and right
+	# (grid point is tile top-left)
+	var cols: int = game_grid.end.x + 2
+	var rows: int = game_grid.end.y + 2
+	var points: Array = []
+	for col in range(cols):
+		for row in range(rows):
+			points.append(Vector2(
+					game_grid.position.x + grid.size*col,
+					game_grid.position.y + grid.size*row
+					))
+	return points
 
 func game_grid() -> Rect2:
 	# Divide game window into squares of side-length grid.size.
@@ -70,7 +112,6 @@ func game_grid() -> Rect2:
 	print(game_grid)
 
 	return game_grid
-
 
 func random_position() -> Vector2:
 	# Pick a random position quantized to the grid.
@@ -133,42 +174,46 @@ func add_player(player_index: int) -> void:
 	# Refer to this just-added player as "player" for readability.
 	var player = players[-1]
 
-	# Make the player a child node of the World scene
-	add_child(player)
-
 	# Assign the joystick device number to this player.
 	# (`player_index` is the player's joystick device number.)
 	player.device_num = player_index
 
 	# Randomize player's starting x,y position.
-	# TODO: constrain random_position to the grid
-	# player.player_block.top_left = random_position()
 	
 	# TESTING:
 	# Random positions are annoying while testing.
 	# Hardcode positions for player_index 0 and 1
 	if player_index == 0:
-		player.position = Vector2(100,100)
+		player.start_position = Vector2(grid.size*4,grid.size*4)
 	elif player_index == 1:
-		player.position = Vector2(140,100)
+		player.start_position = Vector2(grid.size*6,grid.size*4)
 	else:
-		player.position = random_position()
+		player.start_position = random_position()
 
 	# Comment out the above when done testing.
 	# And uncomment the line below.
-	# player.position = random_position()
+	# player.start_position = random_position()
 
 	# TODO: index at random into the list of colors so that I'm
 	# not limited to 4 players.
 	# TODO: let players change their color before the game begins.
+	var colornames: Array = [
+		"magenta",
+		"lightseagreen",
+		"yellow",
+		"lightsalmon",
+		]
+	# TODO: Why a dict? Make this an Array.
 	# Set the player's color
 	var color_dict: Dictionary = {
-		0: ColorN("magenta", 1), # color, alpha
-		1: ColorN("lightseagreen", 1), # color, alpha
-		2: ColorN("yellow", 1), # color, alpha
-		3: ColorN("lightsalmon", 1), # color, alpha
+		0: ColorN(colornames[0], 1), # color, alpha
+		1: ColorN(colornames[1], 1), # color, alpha
+		2: ColorN(colornames[2], 1), # color, alpha
+		3: ColorN(colornames[3], 1), # color, alpha
 		}
-	player.player_block.color = color_dict[player_index]
+	player.color = color_dict[player_index]
+	# Identify players by their color.
+	player.player_name = colornames[player_index]
 
 	# Create an input_map dict for this player's joystick.
 	input_maps.append({
@@ -255,3 +300,7 @@ func add_player(player_index: int) -> void:
 	down_action_event.axis = JOY_AXIS_1 # <---- vertical axis
 	down_action_event.axis_value =  1.0 # <---- down
 	InputMap.action_add_event(down_action, down_action_event)
+
+	# FINALLY: Now that player is all set up,
+	# make the player a child node of the World scene
+	add_child(player)

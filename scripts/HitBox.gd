@@ -1,5 +1,21 @@
+# HitBox defines a collision area for the Parent node.
+#
+# USAGE:
+# Instantiate in Parent node so that HitBox moves with Parent:
+#	onready var player_hitbox: HitBox = HitBox.new()
+# And remember to add as a Child node in Parent._ready:
+#	add_child(player_hitbox)
+# Also remember to override HitBox property `half_extents` BEFORE calling
+# add_child(player_hitbox).
+# Parent connects `area_entered` signal to a func that
+# receives the intruding Area2D as a parameter.
+# (Signal parameters are passed under the hood).
 class_name HitBox
 extends Area2D
+
+# Hardcode a placeholder name for the Parent to override.
+# Example: if Parent is a Player, Parent overrides with the player's color.
+var area_name: String = "placeholder_name"
 
 # Instantiate a CollisionShape2D
 onready var collision_area: CollisionShape2D = CollisionShape2D.new()
@@ -9,9 +25,14 @@ onready var collision_area: CollisionShape2D = CollisionShape2D.new()
 var half_extents := Vector2(1.0, 1.0)
 
 func _ready() -> void:
-	add_child(collision_area)
+	# DEBUGGING
+	print("Running HitBox._ready()...")
+	# Setup the collision_area:
 	collision_area.shape = RectangleShape2D.new()
-	collision_area.shape.extents = self.half_extents
+	collision_area.shape.extents = half_extents
+	print("Hitbox _ready says half_extents are: {v}".format({"v":half_extents}))
+	# Add the collision_area as a child_node.
+	add_child(collision_area)
 
 	# SETUP COLLISIONS
 	# Detect collisions.
@@ -22,3 +43,25 @@ func _ready() -> void:
 # func _on_area_entered(area):
 # 	print("This Area entered me:")
 # 	print(area)
+
+# DEBUGGING
+# Draw the hitbox collision area so I can debug collisions.
+func _draw():
+	print("Draw hitbox")
+	draw_hitbox()
+
+
+func draw_hitbox() -> void:
+	draw_colored_polygon(square(), ColorN("cyan", 0.5))
+
+func square() -> PoolVector2Array:
+	# Define the vertices
+	var points: PoolVector2Array = PoolVector2Array()
+	# get center x,y, assume 0,0 for now
+	var x:float = 0
+	var y:float = 0
+	points.append(Vector2(x-half_extents.x,y-half_extents.y))
+	points.append(Vector2(x-half_extents.x,y+half_extents.y))
+	points.append(Vector2(x+half_extents.x,y+half_extents.y))
+	points.append(Vector2(x+half_extents.x,y-half_extents.y))
+	return points
