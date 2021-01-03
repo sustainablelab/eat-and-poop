@@ -1,21 +1,31 @@
 extends Node2D
 
+# Globally enable/disable DEBUGGING mode.
+# I code all Children Nodes to check DEBUGGING.
+var DEBUGGING = true
+
 # TODO: start in a title scene before entering World.
 
 # TODO: make joystick mapping editable
+# TODO: make keyboard mapping editable
 
-# TODO: save joystick mapping to file -- load mapping from file
-# if it exists for that player, otherwise default to the mapping
-# I have now.
+# TODO: save joystick/keyboard mapping to file -- load mapping
+# from file if it exists for that player, otherwise default to
+# the mapping I have now.
 
 var world: Node2D
 
 func _ready() -> void:
-	# DEBUGGING
-	print("Running Main._ready()...")
-
-	# DEBUGGING
-	# print(Input.get_connected_joypads())
+	if DEBUGGING:
+		print("Running {n}._ready()... connected joypads: {j}".format({
+			"n":name,
+			"j": Input.get_connected_joypads()
+			}))
+		# Report scene hierarchy.
+		print("Parent of '{n}' is '{p}' (Expect 'root')".format({
+			"n":name,
+			"p":get_parent().name,
+			}))
 
 	# Load the World scene
 	var world_scene = preload("res://scenes/World.tscn")
@@ -30,13 +40,32 @@ func _ready() -> void:
 	add_child(world)
 
 	# Connect to the signal that detects when a joystick connects
-	# (`connect()` returns 0: throw away return value in a '_var')
-	var _ret: int
+	var _ret: int # '_' in _var tells GDScript unused var is OK
 	_ret = Input.connect("joy_connection_changed", self, "_on_joy_connection_changed")
-	# DEBUGGING
-	print("joy_connection_changed: Input.connect return value: {val}".format({"val":_ret}))
+	if _ret != 0:
+		print("Error {e} connecting `Input` signal `joy_connection_changed`.".format({"e": _ret}))
 
 func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	if DEBUGGING:
+		if connected:
+			print("Connected device {d}.".format({"d":device}))
+		else:
+			print("Disconnected device {d}.".format({"d":device}))
+	if connected:
+		# Update number of players to number of connected joysticks.
+		world.num_players = Input.get_connected_joypads().size()
+
+		# Add the player to the world. Use the device number as
+		# the player index into the array of players.
+		world.add_player(device)
+		print("Added player index {d} to the world.".format({"d":device}))
+
+	else:
+		# Do not change the number of players when a player disconnects.
+		# There is a chance the disconnected player wins the round.
+
+		world.remove_player(device)
+		print("Removed player index {d} from the world.".format({"d":device}))
 
 	# HARDWARE TESTS:
 	# 1. Two XBOX controllers: always PASS.
@@ -74,24 +103,3 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 	# This behavior is not particular to any of the three
 	# controllers.
 
-	# DEBUGGING
-	if connected:
-		print("Connected device {d}.".format({"d":device}))
-	else:
-		print("Disconnected device {d}.".format({"d":device}))
-
-	if connected:
-		# Update number of players to number of connected joysticks.
-		world.num_players = Input.get_connected_joypads().size()
-
-		# Add the player to the world. Use the device number as
-		# the player index into the array of players.
-		world.add_player(device)
-		print("Added player index {d} to the world.".format({"d":device}))
-
-	else:
-		# Do not change the number of players when a player disconnects.
-		# There is a chance the disconnected player wins the round.
-
-		world.remove_player(device)
-		print("Removed player index {d} from the world.".format({"d":device}))

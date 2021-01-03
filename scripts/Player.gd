@@ -37,6 +37,8 @@
 
 extends Node2D
 
+var DEBUGGING: bool
+
 # TODO: detect collisions with other players
 
 # TODO: time standing still, tell `player_block` to `express_pooping()` when
@@ -76,18 +78,34 @@ var color: Color = ColorN("magenta", 1) # color, alpha
 var start_position: Vector2 = Vector2(100.0, 100.0)
 
 func _ready() -> void:
-	print("Running Player._ready()...")
+	# Inherit parent.DEBUGGING if this scene is not the entry point.
+	var parent_node: Node = get_parent()
+	if parent_node.name != "root":
+		DEBUGGING = parent_node.DEBUGGING
+	else:
+		DEBUGGING = true
+
+	if DEBUGGING:
+		print("Running Player.gd: {n}._ready()... {pn}".format({
+			"n": name,
+			"pn": player_name,
+			}))
+		# Report scene hierarchy.
+		print("Parent of '{n}' is '{p}'".format({
+			"n":name,
+			"p":get_parent().name,
+			}))
+
 	# Use starting position set by Parent Node.
 	# This uses the default start_position when testing Player.
 	position = start_position
 
 	# Setup the HitBox: override HitBox size (half_extents)
-	# player_hitbox.half_extents = Vector2(grid.size/1.5, grid.size/1.5)
-	# player_hitbox.half_extents = Vector2(grid.size/2.5, grid.size/2.5)
-	player_hitbox.half_extents = Vector2(grid.size/2.0, grid.size/2.0)
+	# player_hitbox.half_extents = Vector2(grid.SIZE/1.5, grid.SIZE/1.5)
+	# player_hitbox.half_extents = Vector2(grid.SIZE/2.5, grid.SIZE/2.5)
+	player_hitbox.half_extents = Vector2(grid.SIZE/2.0, grid.SIZE/2.0)
 	player_hitbox.area_name = player_name
 	add_child(player_hitbox)
-	print("hitbox half_extents: {h}".format({"h":player_hitbox.half_extents}))
 
 	# Setup RayCast2D
 	# Enable Area2D detection. Defaults to False.
@@ -99,7 +117,7 @@ func _ready() -> void:
 	# player_ray.enabled = false # default
 	add_child(player_ray)
 
-	# Player size is determined by Grid.size
+	# Player size is determined by Grid.SIZE
 	# Player starting position and color is determined by Parent.
 	# Why do I code color here and not position?
 	# Position is a property of Player.
@@ -121,7 +139,7 @@ func _ready() -> void:
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 	# TODO: decrease speed as the player gets bigger
 	# speed = 0.1
-	speed = grid.size / 200.0
+	speed = grid.SIZE / 200.0
 	if speed > 0.1:
 		speed = 0.1
 	if speed < 0.05:
@@ -135,6 +153,7 @@ func _ready() -> void:
 # ---------------------
 # | Move player_block |
 # ---------------------
+var DEBUGGING_JOYMOTION := false
 func _process(_delta):
 	# Ignore events while Tween animates player_block moving.
 	if not is_moving:
@@ -143,9 +162,9 @@ func _process(_delta):
 			if Input.is_action_pressed(motion):
 				# player_block.move(ui_inputs[motion])
 				move(ui_inputs[motion])
-				# DEBUGGING
-				# print(Input.get_joy_name(self.device_num))
-				# print(Input.get_joy_axis(self.device_num, 0))
+				if DEBUGGING_JOYMOTION:
+					print(Input.get_joy_name(self.device_num))
+					print(Input.get_joy_axis(self.device_num, 0))
 
 
 # Update position when the Player moves its block.
@@ -154,7 +173,7 @@ var speed: float
 
 func move(direction: Vector2 ) -> void:
 	# Ray cast to test for collision before moving
-	var relative_movement = (direction * grid.size)
+	var relative_movement = (direction * grid.SIZE)
 	var destination = position + relative_movement
 	player_ray.cast_to = relative_movement
 	player_ray.force_raycast_update()
@@ -194,7 +213,7 @@ func move(direction: Vector2 ) -> void:
 	# player will move there.
 
 	# Move one tile. Basically do this:
-	# position += direction * grid.size
+	# position += direction * grid.SIZE
 	# But use a Tween for animating motion between tiles.
 
 	# _done is true when Tween.blah() is done.
@@ -226,20 +245,21 @@ var ui_inputs = {
 
 
 # Track when the movement tween animation is happening.
+var DEBUGGING_TWEEN := false
 func _on_smooth_move_started(_object, _key): # _vars are unused
 	is_moving = true
 	player_block.express_motion()
 
-	# DEBUGGING
-	# print("tween start:")
+	if DEBUGGING_TWEEN:
+		print("tween start:")
 
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
 	is_moving = false
 	player_block.express_standing_still()
 
-	# DEBUGGING
-	# print("tween stop:")
+	if DEBUGGING_TWEEN:
+		print("tween stop:")
 
 
 func _on_area_entered(area):
@@ -252,20 +272,20 @@ func _on_area_entered(area):
 	else:
 		print("{a} was moving.".format({"a":player_hitbox.area_name}))
 
-	# DEBUGGING
-	print("{a} entered by {b} with collision_normal {n}.".format({
-		"a":player_hitbox.area_name,
-		"b":area.area_name,
-		"n": player_ray.get_collision_normal()
-		}))
-	# Example:
-	# lightseagreen player moves into square occupied by magenta
-	#
-	#	magenta entered by lightseagreen.
-	#	lightseagreen entered by magenta.
-	#
-	# If magenta entered lightseagreen's square, the order flips:
-	#
-	#	lightseagreen entered by magenta.
-	#	magenta entered by lightseagreen.
-	#
+	if DEBUGGING:
+		print("{a} entered by {b} with collision_normal {n}.".format({
+			"a":player_hitbox.area_name,
+			"b":area.area_name,
+			"n": player_ray.get_collision_normal()
+			}))
+		# Example:
+		# lightseagreen player moves into square occupied by magenta
+		#
+		#	magenta entered by lightseagreen.
+		#	lightseagreen entered by magenta.
+		#
+		# If magenta entered lightseagreen's square, the order flips:
+		#
+		#	lightseagreen entered by magenta.
+		#	magenta entered by lightseagreen.
+		#

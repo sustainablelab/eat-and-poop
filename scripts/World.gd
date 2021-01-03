@@ -1,5 +1,5 @@
 extends Node2D
-
+var DEBUGGING = true
 var game_window: Rect2 # Game window
 onready var grid: Grid = Grid.new()
 
@@ -33,23 +33,37 @@ const player_scene = preload("res://scenes/Player.tscn")
 # _draw() runs once, sometime shortly after _ready() runs
 func _draw() -> void:
 	# gridlines()
-	# DEBUGGING
-	# for point in gridpoints():
-	# 	draw_circle(
-	# 		point, # position
-	# 		grid.size/6.0, # radius
-	# 		ColorN("black", 0.3) # color 
-	# 		)
-	pass
+	if DEBUGGING:
+		for point in gridpoints():
+			draw_circle(
+				point, # position
+				grid.SIZE/6.0, # radius
+				ColorN("black", 0.3) # color 
+				)
 
 # TEMPORARY FIX FOR USING KEYBOARD
 onready var use_keyboard: bool = false
 
 func _ready() -> void:
-	# DEBUGGING
-	print("Running World._ready()...")
+	# Inherit parent.DEBUGGING if this scene is not the entry point.
+	var parent_node: Node = get_parent()
+	if parent_node.name != "root":
+		DEBUGGING = parent_node.DEBUGGING
 
 	game_window = get_viewport_rect()
+
+	if DEBUGGING:
+		print("Running {n}._ready()... Grid is {s} x {s} pixels in a {w} window.".format({
+			"n": name,
+			"s": grid.SIZE,
+			"w": game_window.size,
+			}))
+		# Report scene hierarchy.
+		print("Parent of '{n}' is '{p}'".format({
+			"n":name,
+			"p":get_parent().name,
+			}))
+
 
 	# Seed a random number generator for positioning blocks.
 	rng.randomize() # setup the generator from a time-based seed
@@ -66,10 +80,6 @@ func _ready() -> void:
 		for player_index in range(4):
 			add_player(player_index)
 
-	# DEBUGGING
-	# print(game_window.size)
-	# print(game_window.position.x)
-	# print(game_window.end.x)
 
 # func gridlines() -> void:
 # 	# Draw grid lines
@@ -95,13 +105,13 @@ func gridpoints() -> Array:
 	for col in range(cols):
 		for row in range(rows):
 			points.append(Vector2(
-					game_grid.position.x + grid.size*col,
-					game_grid.position.y + grid.size*row
+					game_grid.position.x + grid.SIZE*col,
+					game_grid.position.y + grid.SIZE*row
 					))
 	return points
 
 func game_grid() -> Rect2:
-	# Divide game window into squares of side-length grid.size.
+	# Divide game window into squares of side-length grid.SIZE.
 	# Return a `Rect2` that describes the game window as a grid.
 	# Example:
 	# If game_window is (0,0,1360,768) and tiles are 20 x 20
@@ -118,9 +128,9 @@ func game_grid() -> Rect2:
 	var game_grid := Rect2()
 	game_grid.position.x = floor(game_window.position.x)
 	game_grid.position.y = floor(game_window.position.y)
-	game_grid.end.x = floor(game_window.end.x / grid.size) - 1
-	game_grid.end.y = floor(game_window.end.y / grid.size) - 1
-	print(game_grid)
+	game_grid.end.x = floor(game_window.end.x / grid.SIZE) - 1
+	game_grid.end.y = floor(game_window.end.y / grid.SIZE) - 1
+	# print(game_grid)
 
 	return game_grid
 
@@ -136,7 +146,7 @@ func random_position() -> Vector2:
 					game_grid.end.y)
 					)
 
-	return random_tile * grid.size
+	return random_tile * grid.SIZE
 
 
 func remove_player(player_index: int) -> void:
@@ -191,19 +201,22 @@ func add_player(player_index: int) -> void:
 
 	# Randomize player's starting x,y position.
 
-	# DEBUGGING (TESTING):
-	# Random positions are annoying while testing.
-	# Hardcode positions for player_index 0 and 1
-	# if player_index == 0:
-	# 	player.start_position = Vector2(grid.size*4,grid.size*4)
-	# elif player_index == 1:
-	# 	player.start_position = Vector2(grid.size*6,grid.size*4)
-	# else:
-	# 	player.start_position = random_position()
+	if DEBUGGING: # TESTING
+		# Random positions are annoying while testing.
+		# Hardcode positions for player_index 0 and 1
+		if player_index == 0:
+			player.start_position = Vector2(grid.SIZE*4,grid.SIZE*4)
+		elif player_index == 1:
+			player.start_position = Vector2(grid.SIZE*6,grid.SIZE*4)
+		elif player_index == 2:
+			player.start_position = Vector2(grid.SIZE*4,grid.SIZE*6)
+		elif player_index == 3:
+			player.start_position = Vector2(grid.SIZE*6,grid.SIZE*6)
+		else:
+			player.start_position = random_position()
 
-	# Comment out the above when done testing.
-	# And uncomment the line below.
-	player.start_position = random_position()
+	else:
+		player.start_position = random_position()
 
 	# TODO: index at random into the list of colors so that I'm
 	# not limited to 4 players.

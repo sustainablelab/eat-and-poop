@@ -1,6 +1,8 @@
 class_name Block
 extends Node2D
 
+var DEBUGGING: bool
+
 # TODO: add hook for Parent to tell Block to `express_pooping()`,
 # similar idea to `express_motion()`
 
@@ -38,26 +40,44 @@ var rng = RandomNumberGenerator.new()
 
 onready var grid: Grid = Grid.new()
 
+
 func _ready():
-	# DEBUGGING
-	print("Running Block._ready()...")
+	# Inherit parent.DEBUGGING if this scene is not the entry point.
+	var parent_node: Node = get_parent()
+	if parent_node.name != "root":
+		DEBUGGING = parent_node.DEBUGGING
+	else:
+		DEBUGGING = true
 
 	# Player starts as a normal square shape.
 	# Player size matches grid tile size.
-	length = grid.size
+	length = grid.SIZE
 	# Center player artwork about player's position.
 	top_left -= Vector2(length/2.0, length/2.0)
 	self.square_points = normal_square()
-	# Dividing by grid.size exaggerates wobbles for smaller grids
+	# Dividing by grid.SIZE exaggerates wobbles for smaller grids
 	# which is good for overcoming truncation to pixel number.
-	WOBBLE_AMOUNT = 0.5 / grid.size
-	# WOBBLE_AMOUNT = 4.0 / grid.size
-	SHAKE_AMOUNT = 1.0 / grid.size
+	WOBBLE_AMOUNT = 0.5 / grid.SIZE
+	# WOBBLE_AMOUNT = 4.0 / grid.SIZE
+	SHAKE_AMOUNT = 1.0 / grid.SIZE
 	WOBBLE_AMOUNT_WHILE_MOVING = WOBBLE_AMOUNT * 3.0
 	# Player's shape deviates with a wobbly effecet.
-	max_wobble_deviation = grid.size * WOBBLE_AMOUNT
+	max_wobble_deviation = grid.SIZE * WOBBLE_AMOUNT
 	# Player's shape deviates with a shaky effecet.
-	max_shake_deviation = grid.size * SHAKE_AMOUNT
+	max_shake_deviation = grid.SIZE * SHAKE_AMOUNT
+
+	if DEBUGGING:
+		print("Running Block.gd: {n}._ready()... ".format({
+			"n": name,
+			}))
+		print("Block flavors as (amount,deviation):")
+		print("Wobble : ({w},{wd}), Shake: ({s},{sd})".format({
+			"w": WOBBLE_AMOUNT,
+			"wd": max_wobble_deviation,
+			"s": SHAKE_AMOUNT,
+			"sd": max_shake_deviation,
+			}))
+
 	# Seed a random number generator for wobbling.
 	rng.randomize() # setup the generator from a time-based seed
 
@@ -110,7 +130,7 @@ func set_top_left(xy: Vector2) -> void:
 
 func set_length(d: float) -> void:
 	# Like top_left, I never write length with this setter.
-	# `length` is `grid.size` all game long.
+	# `length` is `grid.SIZE` all game long.
 	# But I'm leaving this here for future effects.
 	# 1) Use with `self.top_left` for shrinking/growing.
 	length = d
@@ -124,12 +144,12 @@ func set_color(c: Color) -> void:
 
 # Larger deviation communicates block is in motion.
 func express_motion():
-	self.max_wobble_deviation = grid.size * WOBBLE_AMOUNT_WHILE_MOVING
+	self.max_wobble_deviation = grid.SIZE * WOBBLE_AMOUNT_WHILE_MOVING
 
 
 # Restore deviation to original amount when standing still.
 func express_standing_still():
-	self.max_wobble_deviation = grid.size * WOBBLE_AMOUNT
+	self.max_wobble_deviation = grid.SIZE * WOBBLE_AMOUNT
 
 
 # All cool art/animation is custom drawing in 2D -- see example

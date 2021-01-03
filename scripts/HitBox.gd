@@ -13,6 +13,8 @@
 class_name HitBox
 extends Area2D
 
+var DEBUGGING: bool
+
 # Hardcode a placeholder name for the Parent to override.
 # Example: if Parent is a Player, Parent overrides with the player's color.
 var area_name: String = "placeholder_name"
@@ -25,22 +27,20 @@ onready var collision_area: CollisionShape2D = CollisionShape2D.new()
 var half_extents := Vector2(1.0, 1.0)
 
 func _ready() -> void:
-	# DEBUGGING
-	print("Running HitBox._ready()...")
+	# Inherit parent.DEBUGGING if this scene is not the entry point.
+	var parent_node: Node = get_parent()
+	if parent_node.name != "root":
+		DEBUGGING = parent_node.DEBUGGING
+	else:
+		DEBUGGING = true
+
+	if DEBUGGING:
+		print("Running HitBox: {n}._ready()... HitBox size: {h} pixels".format({
+			"n": name,
+			"h": half_extents*2,
+			}))
 	# Setup the collision_area:
 	collision_area.shape = RectangleShape2D.new()
 	collision_area.shape.extents = half_extents
-	print("Hitbox _ready says half_extents are: {v}".format({"v":half_extents}))
 	# Add the collision_area as a child_node.
 	add_child(collision_area)
-
-	# SETUP COLLISIONS
-	# Detect collisions.
-	# var _ret: int
-	# _ret = self.connect("area_entered", self, "_on_area_entered")
-
-
-# func _on_area_entered(area):
-# 	print("This Area entered me:")
-# 	print(area)
-
