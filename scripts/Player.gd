@@ -146,60 +146,31 @@ func _process(_delta):
 				# print(Input.get_joy_name(self.device_num))
 				# print(Input.get_joy_axis(self.device_num, 0))
 
+
 # Update position when the Player moves its block.
 var speed: float
 
-func _draw() -> void:
-	draw_line(
-		player_ray.position, # from
-		player_ray.cast_to, # to
-		color # color
-		)
-
-func ray_viz() -> void:
-	# Draw a line visualizing where the RayCast is.
-	update()
 
 func move(direction: Vector2 ) -> void:
-	# TODO:
-	# Add code to draw the RayCast2D to help with debugging this weird behavior!
-	var destination
-	destination = position + (direction * grid.size)
-	print("Player position: {p}".format({"p":position}))
-	print("Player destination: {d}".format({"d":destination}))
-	# TODO: ray cast to test for collision before moving
-	player_ray.cast_to = destination
-	# print("Ray position: {p}".format({"p":player_ray.position}))
-	# print("Ray destination: {d}".format({"d":player_ray.cast_to}))
-	ray_viz()
+	# Ray cast to test for collision before moving
+	var relative_movement = (direction * grid.size)
+	var destination = position + relative_movement
+	player_ray.cast_to = relative_movement
 	player_ray.force_raycast_update()
+	if player_ray.is_colliding():
+		# Some values I might want to use later.
+		# var collision_point: Vector2 = player_ray.get_collision_point()
+		# var collision_normal: Vector2 = player_ray.get_collision_normal()
+		# var collider_name: String = player_ray.get_collider().area_name
+		# var collider_size: Vector2 = player_ray.get_collider().half_extents*2
 
-	var is_colliding = player_ray.is_colliding()
-	print("Expect collision? {b}".format({"b":is_colliding}))
-
-	if is_colliding:
-		var collision_point: Vector2 = player_ray.get_collision_point()
-		print("Collision point: {p}".format({"p":collision_point}))
-		print("Collision normal: {n}".format({"n":player_ray.get_collision_normal()}))
-		print("Collider: {c}".format({"c":player_ray.get_collider().area_name}))
-		print("Collider size: {c}".format({"c":player_ray.get_collider().half_extents*2}))
-
-		# if position == collision_point:
-		# 	# Ignore collision when another player is somehow in the square
-		# 	# this player is already in.
-		# 	pass
-		# else:
-			# print("Collision: can't go to: {d}".format({"d":destination}))
-
-		print("Collision: can't go to: {d}".format({"d":destination}))
 		# Do a motion tween, but don't go anywhere.
 		destination = position
 
-		# Reset collision to false? Nope, doesn't help.
-		# player_ray.cast_to = position
-		# player_ray.force_raycast_update()
+	# At this point, the player is still going to show an "attempt" to move. If
+	# there was a collision, the player will not move anywhere. If not, the
+	# player will move there.
 
-	# Next tile is available, go ahead and move there.
 	# Move one tile. Basically do this:
 	# position += direction * grid.size
 	# But use a Tween for animating motion between tiles.
@@ -239,8 +210,6 @@ func _on_smooth_move_started(_object, _key): # _vars are unused
 
 	# DEBUGGING
 	# print("tween start:")
-	# print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
-	# print("\tself.position = {v}".format({"v":self.position}))
 
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
@@ -249,20 +218,17 @@ func _on_smooth_move_completed(_object, _key): # _vars are unused
 
 	# DEBUGGING
 	# print("tween stop:")
-	# print("\tplayer_block.top_left = {v}".format({"v":player_block.top_left}))
-	# print("\tself.position = {v}".format({"v":self.position}))
 
 
 func _on_area_entered(area):
-	# Get thrown back if standing still.
+	# TODO: Get thrown back if standing still.
 	if not is_moving:
+		# Use get_collision_normal to find out the Vector2 of the attacker.
 		# Placeholder: always move right
-		# self.move(Vector2.RIGHT)
+		self.move(Vector2.RIGHT)
 		pass
-		# TODO: how do I find out the Vector2 of the attacker?
-		# Use RayCast2D: get_collision_normal
 
-	# Only print a message for the player trying to move.
+	# Only print a message for the player that caused the collision.
 	# DEBUGGING
 	print("{a} entered by {b}.".format({"a":player_hitbox.area_name, "b":area.area_name}))
 	# Example:

@@ -44,24 +44,3 @@ func _ready() -> void:
 # 	print("This Area entered me:")
 # 	print(area)
 
-# DEBUGGING
-# Draw the hitbox collision area so I can debug collisions.
-func _draw():
-	print("Draw hitbox")
-	draw_hitbox()
-
-
-func draw_hitbox() -> void:
-	draw_colored_polygon(square(), ColorN("cyan", 0.5))
-
-func square() -> PoolVector2Array:
-	# Define the vertices
-	var points: PoolVector2Array = PoolVector2Array()
-	# get center x,y, assume 0,0 for now
-	var x:float = 0
-	var y:float = 0
-	points.append(Vector2(x-half_extents.x,y-half_extents.y))
-	points.append(Vector2(x-half_extents.x,y+half_extents.y))
-	points.append(Vector2(x+half_extents.x,y+half_extents.y))
-	points.append(Vector2(x+half_extents.x,y-half_extents.y))
-	return points

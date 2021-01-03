@@ -164,6 +164,10 @@ func add_player(player_index: int) -> void:
 		# do nothing, so there is nothing to do to "revive" the
 		# player. They reconnect their joystick and they can move
 		# again.
+		# TODO: change to property "player.connected" and
+		# `Player` should be the one to interpret this as a
+		# change in alpha. `World` should not know how `Player`
+		# visualizes itself with `Block`.
 		players[player_index].player_block.color.a = 1
 		return
 
@@ -203,13 +207,17 @@ func add_player(player_index: int) -> void:
 		"yellow",
 		"lightsalmon",
 		]
+	# DEBUGGING COLLSIONS: Debug -> Visible Collision Shapes
+	# alpha < 1 to see Player's Area2D.
+	# var alpha = 1.0 # build
+	var alpha = 0.3 # debug
 	# TODO: Why a dict? Make this an Array.
 	# Set the player's color
 	var color_dict: Dictionary = {
-		0: ColorN(colornames[0], 1), # color, alpha
-		1: ColorN(colornames[1], 1), # color, alpha
-		2: ColorN(colornames[2], 1), # color, alpha
-		3: ColorN(colornames[3], 1), # color, alpha
+		0: ColorN(colornames[0], alpha), # color, alpha
+		1: ColorN(colornames[1], alpha), # color, alpha
+		2: ColorN(colornames[2], alpha), # color, alpha
+		3: ColorN(colornames[3], alpha), # color, alpha
 		}
 	player.color = color_dict[player_index]
 	# Identify players by their color.
