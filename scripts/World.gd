@@ -33,12 +33,17 @@ const player_scene = preload("res://scenes/Player.tscn")
 # _draw() runs once, sometime shortly after _ready() runs
 func _draw() -> void:
 	# gridlines()
-	for point in gridpoints():
-		draw_circle(
-			point, # position
-			grid.size/6.0, # radius
-			ColorN("black", 0.3) # color 
-			)
+	# DEBUGGING
+	# for point in gridpoints():
+	# 	draw_circle(
+	# 		point, # position
+	# 		grid.size/6.0, # radius
+	# 		ColorN("black", 0.3) # color 
+	# 		)
+	pass
+
+# TEMPORARY FIX FOR USING KEYBOARD
+onready var use_keyboard: bool = false
 
 func _ready() -> void:
 	# DEBUGGING
@@ -54,6 +59,12 @@ func _ready() -> void:
 	# If no parent, default to 4 joysticks for testing.
 	for player_index in range(num_players):
 		add_player(player_index)
+	
+	# TEMPORARY FIX FOR USING KEYBOARD
+	if num_players == 0:
+		use_keyboard = true
+		for player_index in range(4):
+			add_player(player_index)
 
 	# DEBUGGING
 	# print(game_window.size)
@@ -178,25 +189,21 @@ func add_player(player_index: int) -> void:
 	# Refer to this just-added player as "player" for readability.
 	var player = players[-1]
 
-	# Assign the joystick device number to this player.
-	# (`player_index` is the player's joystick device number.)
-	player.device_num = player_index
-
 	# Randomize player's starting x,y position.
-	
-	# TESTING:
+
+	# DEBUGGING (TESTING):
 	# Random positions are annoying while testing.
 	# Hardcode positions for player_index 0 and 1
-	if player_index == 0:
-		player.start_position = Vector2(grid.size*4,grid.size*4)
-	elif player_index == 1:
-		player.start_position = Vector2(grid.size*6,grid.size*4)
-	else:
-		player.start_position = random_position()
+	# if player_index == 0:
+	# 	player.start_position = Vector2(grid.size*4,grid.size*4)
+	# elif player_index == 1:
+	# 	player.start_position = Vector2(grid.size*6,grid.size*4)
+	# else:
+	# 	player.start_position = random_position()
 
 	# Comment out the above when done testing.
 	# And uncomment the line below.
-	# player.start_position = random_position()
+	player.start_position = random_position()
 
 	# TODO: index at random into the list of colors so that I'm
 	# not limited to 4 players.
@@ -209,8 +216,8 @@ func add_player(player_index: int) -> void:
 		]
 	# DEBUGGING COLLSIONS: Debug -> Visible Collision Shapes
 	# alpha < 1 to see Player's Area2D.
-	# var alpha = 1.0 # build
-	var alpha = 0.3 # debug
+	var alpha = 1.0 # build
+	# var alpha = 0.3 # debug
 	# TODO: Why a dict? Make this an Array.
 	# Set the player's color
 	var color_dict: Dictionary = {
@@ -223,7 +230,7 @@ func add_player(player_index: int) -> void:
 	# Identify players by their color.
 	player.player_name = colornames[player_index]
 
-	# Create an input_map dict for this player's joystick.
+	# Create an input_map dict for this player's joystick/keyboard.
 	input_maps.append({
 		"ui_right{n}".format({"n":player_index}): Vector2.RIGHT,
 		"ui_left{n}".format({"n":player_index}): Vector2.LEFT,
@@ -236,78 +243,159 @@ func add_player(player_index: int) -> void:
 	# Assign the input_map to this player.
 	player.ui_inputs = input_maps[player_index]
 
-	# Edit the InputMap to match the names used in the input_map assignments.
-	# For example, default InputMap has name "ui_left".
-	# I use the same default names but with a device number suffix.
-	# So "ui_left" becomes "ui_left0", "ui_left1", etc.
-	# These are called "actions". The joypad motion that triggers
-	# the action is called an "action event".
+	if not use_keyboard:
+		# Use controllers
+		# Assign the joystick device number to this player.
+		# (`player_index` is the player's joystick device number.)
+		player.device_num = player_index
 
-	# CODE:
-	# I create the String and the InputEventJoypadMotion in a
-	# for loop so that there are unique instances of each.
-	#
-	# -> If I defined the InputEventJoypadMotion *outside* the
-	# for loop, then there is only one instance is in memory.
-	# Each time I updated this instance with settings for the
-	# next player, the previous players are still "looking" at
-	# that same instance, so by the end of the loop, all players
-	# are controlled by the last controller connected. No good.
-	#
-	# For readability, I make variables to temporarily point to
-	# the String that identifies the "action" and the
-	# InputEventJoypadMotion that defines the "action event".
-	# Also, I don't know how to set properities in the `new()`
-	# method, so I need a variable to refer back to the
-	# InputEventJoypadMotion to set its properties.
 
-	var right_action: String
-	var right_action_event: InputEventJoypadMotion
+		# Edit the InputMap to match the names used in the input_map assignments.
+		# For example, default InputMap has name "ui_left".
+		# I use the same default names but with a device number suffix.
+		# So "ui_left" becomes "ui_left0", "ui_left1", etc.
+		# These are called "actions". The joypad motion that triggers
+		# the action is called an "action event".
 
-	var left_action: String
-	var left_action_event: InputEventJoypadMotion
+		# CODE:
+		# I create the String and the InputEventJoypadMotion in a
+		# for loop so that there are unique instances of each.
+		#
+		# -> If I defined the InputEventJoypadMotion *outside* the
+		# for loop, then there is only one instance is in memory.
+		# Each time I updated this instance with settings for the
+		# next player, the previous players are still "looking" at
+		# that same instance, so by the end of the loop, all players
+		# are controlled by the last controller connected. No good.
+		#
+		# For readability, I make variables to temporarily point to
+		# the String that identifies the "action" and the
+		# InputEventJoypadMotion that defines the "action event".
+		# Also, I don't know how to set properities in the `new()`
+		# method, so I need a variable to refer back to the
+		# InputEventJoypadMotion to set its properties.
 
-	var up_action: String
-	var up_action_event: InputEventJoypadMotion
+		var right_action: String
+		var right_action_event: InputEventJoypadMotion
 
-	var down_action: String
-	var down_action_event: InputEventJoypadMotion
+		var left_action: String
+		var left_action_event: InputEventJoypadMotion
 
-	right_action = "ui_right{n}".format({"n":player_index})
-	InputMap.add_action(right_action)
-	# Creat a new InputEvent instance to assign to the InputMap.
-	right_action_event = InputEventJoypadMotion.new()
-	right_action_event.device = player_index
-	right_action_event.axis = JOY_AXIS_0 # <---- horizontal axis
-	right_action_event.axis_value =  1.0 # <---- right
-	InputMap.action_add_event(right_action, right_action_event)
+		var up_action: String
+		var up_action_event: InputEventJoypadMotion
 
-	left_action = "ui_left{n}".format({"n":player_index})
-	InputMap.add_action(left_action)
-	# Creat a new InputEvent instance to assign to the InputMap.
-	left_action_event = InputEventJoypadMotion.new()
-	left_action_event.device = player_index
-	left_action_event.axis = JOY_AXIS_0 # <---- horizontal axis
-	left_action_event.axis_value = -1.0 # <---- left
-	InputMap.action_add_event(left_action, left_action_event)
+		var down_action: String
+		var down_action_event: InputEventJoypadMotion
 
-	up_action = "ui_up{n}".format({"n":player_index})
-	InputMap.add_action(up_action)
-	# Creat a new InputEvent instance to assign to the InputMap.
-	up_action_event = InputEventJoypadMotion.new()
-	up_action_event.device = player_index
-	up_action_event.axis = JOY_AXIS_1 # <---- vertical axis
-	up_action_event.axis_value = -1.0 # <---- up
-	InputMap.action_add_event(up_action, up_action_event)
+		right_action = "ui_right{n}".format({"n":player_index})
+		InputMap.add_action(right_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		right_action_event = InputEventJoypadMotion.new()
+		right_action_event.device = player_index
+		right_action_event.axis = JOY_AXIS_0 # <---- horizontal axis
+		right_action_event.axis_value =  1.0 # <---- right
+		InputMap.action_add_event(right_action, right_action_event)
 
-	down_action = "ui_down{n}".format({"n":player_index})
-	InputMap.add_action(down_action)
-	# Creat a new InputEvent instance to assign to the InputMap.
-	down_action_event = InputEventJoypadMotion.new()
-	down_action_event.device = player_index
-	down_action_event.axis = JOY_AXIS_1 # <---- vertical axis
-	down_action_event.axis_value =  1.0 # <---- down
-	InputMap.action_add_event(down_action, down_action_event)
+		left_action = "ui_left{n}".format({"n":player_index})
+		InputMap.add_action(left_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		left_action_event = InputEventJoypadMotion.new()
+		left_action_event.device = player_index
+		left_action_event.axis = JOY_AXIS_0 # <---- horizontal axis
+		left_action_event.axis_value = -1.0 # <---- left
+		InputMap.action_add_event(left_action, left_action_event)
+
+		up_action = "ui_up{n}".format({"n":player_index})
+		InputMap.add_action(up_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		up_action_event = InputEventJoypadMotion.new()
+		up_action_event.device = player_index
+		up_action_event.axis = JOY_AXIS_1 # <---- vertical axis
+		up_action_event.axis_value = -1.0 # <---- up
+		InputMap.action_add_event(up_action, up_action_event)
+
+		down_action = "ui_down{n}".format({"n":player_index})
+		InputMap.add_action(down_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		down_action_event = InputEventJoypadMotion.new()
+		down_action_event.device = player_index
+		down_action_event.axis = JOY_AXIS_1 # <---- vertical axis
+		down_action_event.axis_value =  1.0 # <---- down
+		InputMap.action_add_event(down_action, down_action_event)
+
+	else:
+		# Use keyboard
+		# Map to keys for four people on one keyboard.
+		var arrows: Dictionary = {
+			"key_right": KEY_RIGHT,
+			"key_left":  KEY_LEFT,
+			"key_up":    KEY_UP,
+			"key_down":  KEY_DOWN,
+			}
+		var wasd: Dictionary = {
+			"key_right": KEY_D,
+			"key_left":  KEY_A,
+			"key_up":    KEY_W,
+			"key_down":  KEY_S,
+			}
+		var hjkl: Dictionary = {
+			"key_right": KEY_L,
+			"key_left":  KEY_H,
+			"key_up":    KEY_K,
+			"key_down":  KEY_J,
+			}
+		var uiop: Dictionary = {
+			"key_right": KEY_P,
+			"key_left":  KEY_U,
+			"key_up":    KEY_O,
+			"key_down":  KEY_I,
+			}
+		var keymaps: Dictionary = {
+			0: arrows,
+			1: wasd,
+			2: hjkl,
+			3: uiop,
+			}
+
+		var right_action: String
+		var right_action_event: InputEventKey
+
+		var left_action: String
+		var left_action_event: InputEventKey
+
+		var up_action: String
+		var up_action_event: InputEventKey
+
+		var down_action: String
+		var down_action_event: InputEventKey
+
+		right_action = "ui_right{n}".format({"n":player_index})
+		InputMap.add_action(right_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		right_action_event = InputEventKey.new()
+		right_action_event.scancode = keymaps[player_index]["key_right"]
+		InputMap.action_add_event(right_action, right_action_event)
+
+		left_action = "ui_left{n}".format({"n":player_index})
+		InputMap.add_action(left_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		left_action_event = InputEventKey.new()
+		left_action_event.scancode = keymaps[player_index]["key_left"]
+		InputMap.action_add_event(left_action, left_action_event)
+
+		up_action = "ui_up{n}".format({"n":player_index})
+		InputMap.add_action(up_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		up_action_event = InputEventKey.new()
+		up_action_event.scancode = keymaps[player_index]["key_up"]
+		InputMap.action_add_event(up_action, up_action_event)
+
+		down_action = "ui_down{n}".format({"n":player_index})
+		InputMap.add_action(down_action)
+		# Creat a new InputEvent instance to assign to the InputMap.
+		down_action_event = InputEventKey.new()
+		down_action_event.scancode = keymaps[player_index]["key_down"]
+		InputMap.action_add_event(down_action, down_action_event)
 
 	# FINALLY: Now that player is all set up,
 	# make the player a child node of the World scene

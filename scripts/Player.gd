@@ -83,7 +83,8 @@ func _ready() -> void:
 
 	# Setup the HitBox: override HitBox size (half_extents)
 	# player_hitbox.half_extents = Vector2(grid.size/1.5, grid.size/1.5)
-	player_hitbox.half_extents = Vector2(grid.size/2.5, grid.size/2.5)
+	# player_hitbox.half_extents = Vector2(grid.size/2.5, grid.size/2.5)
+	player_hitbox.half_extents = Vector2(grid.size/2.0, grid.size/2.0)
 	player_hitbox.area_name = player_name
 	add_child(player_hitbox)
 	print("hitbox half_extents: {h}".format({"h":player_hitbox.half_extents}))
@@ -160,12 +161,33 @@ func move(direction: Vector2 ) -> void:
 	if player_ray.is_colliding():
 		# Some values I might want to use later.
 		# var collision_point: Vector2 = player_ray.get_collision_point()
-		# var collision_normal: Vector2 = player_ray.get_collision_normal()
+		var collision_normal: Vector2 = player_ray.get_collision_normal()
+		print("collision_normal: {n}".format({"n": collision_normal}))
 		# var collider_name: String = player_ray.get_collider().area_name
 		# var collider_size: Vector2 = player_ray.get_collider().half_extents*2
 
-		# Do a motion tween, but don't go anywhere.
-		destination = position
+		# TEMPORARY FIX:
+		# Two players charge at each other, sometimes they both get onto the
+		# same square, then they're frozen because of colliding.
+
+		if collision_normal == Vector2(0,0):
+			# Don't treat this like a collision.
+			pass
+		else:
+			# Standard collision behavior.
+			# Otherwise, do a motion tween, but don't go anywhere.
+			destination = position
+		
+		# END TEMPORARY FIX
+		# LONGTERM FIX:
+		# Kurt says either:
+		# 1. Actually fix it so this case never happens.
+		# 2. When throw-back behavior is implemented, make it so that game
+		# randomly decides which player "won" that confrontation, and the other
+		# player gets thrown back.
+
+		# # Do a motion tween, but don't go anywhere.
+		# destination = position
 
 	# At this point, the player is still going to show an "attempt" to move. If
 	# there was a collision, the player will not move anywhere. If not, the
@@ -225,12 +247,17 @@ func _on_area_entered(area):
 	if not is_moving:
 		# Use get_collision_normal to find out the Vector2 of the attacker.
 		# Placeholder: always move right
-		self.move(Vector2.RIGHT)
-		pass
+		# self.move(Vector2.RIGHT)
+		print("{a} was not moving.".format({"a":player_hitbox.area_name}))
+	else:
+		print("{a} was moving.".format({"a":player_hitbox.area_name}))
 
-	# Only print a message for the player that caused the collision.
 	# DEBUGGING
-	print("{a} entered by {b}.".format({"a":player_hitbox.area_name, "b":area.area_name}))
+	print("{a} entered by {b} with collision_normal {n}.".format({
+		"a":player_hitbox.area_name,
+		"b":area.area_name,
+		"n": player_ray.get_collision_normal()
+		}))
 	# Example:
 	# lightseagreen player moves into square occupied by magenta
 	#
