@@ -38,8 +38,7 @@ config/icon="res://icon.png"
 
 [display]
 
-window/size/height=200
-window/size/fullscreen=true
+window/size/width=600
 
 [input]
 

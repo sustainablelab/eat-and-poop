@@ -5,45 +5,13 @@
 # ├─ HitBox (HitBox.gd -- define a collision area)
 # └─ Block (Block.gd -- what Player looks like on the screen)
 #
-# ADD CHILD NODES
-# I don't use the Godot editor to add Child nodes to `Player`.
-# I do this in the code instead.
-# See the docs for "creating nodes":
-# https://docs.godotengine.org/en/stable/getting_started/step_by_step/scripting_continued.html?highlight=_ready#creating-nodes
-# There are two steps:
-# 1. Define Player property as instance of Child node class with `new()`
-# 2. Call add_child() in _ready().
-# CHILD NODE CLASSES
-# For classes I define in `.gd` scripts, the GDScript compiler knows about the
-# class because of the script's first line: `class_name`.
-# USE PLAYER
-# Player has no class_name because Player is a scene!
-# Assign Player.gd (this script) to scene Player.tscn in Godot editor.
-# The Parent makes Player a Child node in code.
-# See the docs for "instancing scenes":
-# https://docs.godotengine.org/en/stable/getting_started/step_by_step/scripting_continued.html?highlight=_ready#instancing-scenes
-#
-# Three steps:
-# 1. Load the Player scene:
-#	const player_scene = preload("res://scenes/Player.tscn")
-# 2. Instantiate a player: (like the .new() in the previous)
-#	var player1 = player_scene.instance()
-# 3. Add as a child node:
-#	add_child(player1)
-#
-# Player is a scene, not just a script with a class name.
-# Scenes have execution benefits under the hood.
-# And as a scene, it is a stand-alone game component I can test with `F6`.
-
 extends Node2D
 
 var DEBUGGING: bool
 
-# TODO: detect collisions with other players
-
 # TODO: time standing still, tell `player_block` to `express_pooping()` when
 # timer is up, similar idea to `express_motion`.
-#
+
 # JOYSTICK
 # Hardcode a default joystick device_num for testing.
 # Parent overrides `device_num` when it instantiates Player and
@@ -107,7 +75,8 @@ func _ready() -> void:
 	player_hitbox.area_name = player_name
 	add_child(player_hitbox)
 
-	# Setup RayCast2D
+	# SETUP COLLISION DETECTION
+	# Setup RayCast2D for COLLISIONS
 	# Enable Area2D detection. Defaults to False.
 	player_ray.collide_with_areas = true
 	# Ignore colliding with Player's own Area2D!
@@ -133,22 +102,13 @@ func _ready() -> void:
 	# Use a tween to animate moving in the grid.
 	add_child(smooth_move)
 	# Detect tween start/stop to change wobble effect while moving.
-	# (`connect()` returns 0: throw away return value in a '_var')
 	var _ret: int
 	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
-	# TODO: decrease speed as the player gets bigger
-	# speed = 0.1
-	speed = grid.SIZE / 200.0
-	if speed > 0.1:
-		speed = 0.1
-	if speed < 0.05:
-		speed = 0.05
-
 	# SETUP COLLISIONS
 	# Detect collisions.
 	_ret = player_hitbox.connect("area_entered", self, "_on_area_entered")
-
+	_ret = parent_node.connect("player_hit", self, "_on_player_hit")
 
 # ---------------------
 # | Move player_block |
@@ -167,59 +127,120 @@ func _process(_delta):
 					print(Input.get_joy_axis(self.device_num, 0))
 
 
-# Update position when the Player moves its block.
-var speed: float
+# Emit a signal when this Player's move causes a collision.
+signal hit
 
 
-func move(direction: Vector2 ) -> void:
-	# Ray cast to test for collision before moving
-	var relative_movement = (direction * grid.SIZE)
-	var destination = position + relative_movement
-	player_ray.cast_to = relative_movement
-	player_ray.force_raycast_update()
-	if player_ray.is_colliding():
-		# Some values I might want to use later.
-		# var collision_point: Vector2 = player_ray.get_collision_point()
-		var collision_normal: Vector2 = player_ray.get_collision_normal()
+# Respond to `hit` signal when another Player's move collided into this player.
+func _on_player_hit(victim_name, collision_normal) -> void:
+	if victim_name == player_name:
+		# This player is the victim. Respond.
+		if DEBUGGING:
+			print("{pn} was hit!".format({
+				"pn": player_name,
+				}))
+		# move_because_hit(collision_normal*-1)
+		move(collision_normal*-1, speed_from_being_hit())
+
+
+var DEBUGGING_COLLISION := false
+
+
+func move_will_collide(ray: RayCast2D, relative_movement: Vector2) -> bool:
+	ray.cast_to = relative_movement
+	ray.force_raycast_update()
+	var will_collide: bool = ray.is_colliding()
+	# Handle Corner Case:
+	# Two players charge at each other.
+	# If players start movement at exact same time, they both get onto the same
+	# square, then they're frozen because of colliding.
+	# Temporary fix: detect this case and let players pass through each other.
+	var TEMPORARY_FIX := true
+	if TEMPORARY_FIX:
+		if ray.get_collision_normal() == Vector2(0,0):
+			# if the normal is 0,0, collision happens while players are on the
+			# same square.
+			will_collide = false
+
+	# LONGTERM FIX:
+	# Kurt says either:
+	# 1. Actually fix it so this case never happens.
+	# 2. When throw-back behavior is implemented, make it so that game
+	# randomly decides which player "won" that confrontation, and the other
+	# player gets thrown back.
+
+	return will_collide
+
+func notify_victim(ray: RayCast2D) -> void:
+	# Emit a signal connected to World.
+	# World then broadcasts a new signal connected to all players.
+	#
+	# Some values I might want to use later:
+	# var collision_point: Vector2 = player_ray.get_collision_point()
+	# var collider_size: Vector2 = player_ray.get_collider().half_extents*2
+
+	var victim_name: String = ray.get_collider().area_name
+	var collision_normal: Vector2 = ray.get_collision_normal()
+	# Notify other player with collision details.
+	emit_signal("hit", victim_name, collision_normal)
+
+	if DEBUGGING_COLLISION:
 		print("collision_normal: {n}".format({"n": collision_normal}))
-		# var collider_name: String = player_ray.get_collider().area_name
-		# var collider_size: Vector2 = player_ray.get_collider().half_extents*2
+		print("victim_name: {n}".format({"n": victim_name}))
 
-		# TEMPORARY FIX:
-		# Two players charge at each other, sometimes they both get onto the
-		# same square, then they're frozen because of colliding.
 
-		if collision_normal == Vector2(0,0):
-			# Don't treat this like a collision.
-			pass
-		else:
-			# Standard collision behavior.
-			# Otherwise, do a motion tween, but don't go anywhere.
-			destination = position
-		
-		# END TEMPORARY FIX
-		# LONGTERM FIX:
-		# Kurt says either:
-		# 1. Actually fix it so this case never happens.
-		# 2. When throw-back behavior is implemented, make it so that game
-		# randomly decides which player "won" that confrontation, and the other
-		# player gets thrown back.
 
-		# # Do a motion tween, but don't go anywhere.
-		# destination = position
+# # Update position when the Player is moved after being hit.
+# func move_because_hit(direction: Vector2) -> void:
+# 	# Calculate relative and absolute destination.
+# 	# Relative is for RayCast. Absolute is for Tween.
+# 	var relative_movement = (direction * grid.SIZE)
+# 	var destination = position + relative_movement
+# 	# Test for collision.
+# 	if move_will_colide(relative_movement):
 
-	# At this point, the player is still going to show an "attempt" to move. If
-	# there was a collision, the player will not move anywhere. If not, the
-	# player will move there.
+func speed_from_regular_movement() -> float:
+	# Return Tween speed for regular movement.
+	# TODO: use modifier key Shift for speedup
+	# var speed = grid.SIZE / 200.0
+	# if speed > 0.1:
+	# 	speed = 0.1
+	# if speed < 0.05:
+	# 	speed = 0.05
+	var speed: float = 0.2
+	return speed
 
-	# Move one tile. Basically do this:
-	# position += direction * grid.SIZE
-	# But use a Tween for animating motion between tiles.
 
-	# _done is true when Tween.blah() is done.
-	# I store return values in "_vars" to avoid Debugger warnings.
+func speed_from_hitting() -> float:
+	var speed: float = 1.2*speed_from_regular_movement()
+	return speed
 
-	var _done: bool
+
+func speed_from_being_hit() -> float:
+	var speed: float = 0.7*speed_from_regular_movement()
+	return speed
+
+# Update position when the Player moves its block.
+func move(direction: Vector2, speed: float = speed_from_regular_movement()) -> void:
+	# Calculate relative and absolute destination.
+	var relative_movement = (direction * grid.SIZE) # for RayCast
+	var destination = position + relative_movement # for Tween
+	if move_will_collide(player_ray, relative_movement):
+		notify_victim(player_ray)
+		# Slow the attacker
+		if speed == speed_from_regular_movement():
+			speed = speed_from_hitting()
+
+	# Use a Tween for animating motion between tiles.
+
+	# TODO: Mess with other Tween easing functions.
+	# Maybe easing functions are better than varying movement speed for making
+	# it feel like the victim is suddenly pushed (start quick, then ease out
+	# with overshoot), or the attacker needed to gather force (start slow, then
+	# burst at the end).
+
+	# Compiler ignores unused vars with `_` prefix
+	var _done: bool # Always True.
 	_done = smooth_move.interpolate_property(
 		self, # object
 		"position", # property name

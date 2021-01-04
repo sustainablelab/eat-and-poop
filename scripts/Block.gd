@@ -32,6 +32,8 @@ var WOBBLE_AMOUNT_WHILE_MOVING: float
 # Faster wobbles look more like blur and shimmer.
 # Slower wobbles look better as smaller wobbles.
 # Faster wobbles can get away with larger wobbles.
+# TODO: increase wobble for smaller grid sizes (at 10 pixel grid,
+# standing wobble is too small)
 
 var max_wobble_deviation: float
 var max_shake_deviation: float
@@ -55,12 +57,10 @@ func _ready():
 	# Center player artwork about player's position.
 	top_left -= Vector2(length/2.0, length/2.0)
 	self.square_points = normal_square()
-	# Dividing by grid.SIZE exaggerates wobbles for smaller grids
-	# which is good for overcoming truncation to pixel number.
-	WOBBLE_AMOUNT = 0.5 / grid.SIZE
+	WOBBLE_AMOUNT = 0.024
+	WOBBLE_AMOUNT_WHILE_MOVING = WOBBLE_AMOUNT * 3.0
 	# WOBBLE_AMOUNT = 4.0 / grid.SIZE
 	SHAKE_AMOUNT = 1.0 / grid.SIZE
-	WOBBLE_AMOUNT_WHILE_MOVING = WOBBLE_AMOUNT * 3.0
 	# Player's shape deviates with a wobbly effecet.
 	max_wobble_deviation = grid.SIZE * WOBBLE_AMOUNT
 	# Player's shape deviates with a shaky effecet.
@@ -70,12 +70,12 @@ func _ready():
 		print("Running Block.gd: {n}._ready()... ".format({
 			"n": name,
 			}))
-		print("Block flavors as (amount,deviation):")
-		print("Wobble : ({w},{wd}), Shake: ({s},{sd})".format({
+		print("Wobble: (standing:{w}, moving:{wm})".format({
 			"w": WOBBLE_AMOUNT,
-			"wd": max_wobble_deviation,
+			"wm": WOBBLE_AMOUNT_WHILE_MOVING,
+			}))
+		print("Shake: {s}".format({
 			"s": SHAKE_AMOUNT,
-			"sd": max_shake_deviation,
 			}))
 
 	# Seed a random number generator for wobbling.

@@ -31,9 +31,12 @@ var rng = RandomNumberGenerator.new()
 const player_scene = preload("res://scenes/Player.tscn")
 
 # _draw() runs once, sometime shortly after _ready() runs
+# TODO: why is their a delay in responding to motion input when
+# DEBUGGING_GRID = true?
+var DEBUGGING_GRID = false
 func _draw() -> void:
 	# gridlines()
-	if DEBUGGING:
+	if DEBUGGING_GRID:
 		for point in gridpoints():
 			draw_circle(
 				point, # position
@@ -77,8 +80,11 @@ func _ready() -> void:
 	# TEMPORARY FIX FOR USING KEYBOARD
 	if num_players == 0:
 		use_keyboard = true
+		# for player_index in range(1):
 		for player_index in range(4):
 			add_player(player_index)
+
+
 
 
 # func gridlines() -> void:
@@ -242,6 +248,11 @@ func add_player(player_index: int) -> void:
 	player.color = color_dict[player_index]
 	# Identify players by their color.
 	player.player_name = colornames[player_index]
+
+	# SETUP COLLISION RESPONSES
+	# (`connect()` returns 0: throw away return value in a '_var')
+	var _ret: int
+	_ret = player.connect("hit", self, "_on_hit")
 
 	# Create an input_map dict for this player's joystick/keyboard.
 	input_maps.append({
@@ -413,3 +424,13 @@ func add_player(player_index: int) -> void:
 	# FINALLY: Now that player is all set up,
 	# make the player a child node of the World scene
 	add_child(player)
+
+
+# Broadcast when one player hits another.
+signal player_hit
+
+func _on_hit(victim_name, collision_normal) -> void:
+	emit_signal("player_hit", victim_name, collision_normal)
+
+
+
