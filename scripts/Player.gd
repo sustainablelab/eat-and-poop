@@ -33,6 +33,9 @@ onready var player_ray: RayCast2D = RayCast2D.new() # see add_child(player_ray)
 # Parent overrides name when instantiating player.
 var player_name: String = "player_name"
 
+# Find out how big my world is.
+var world: Rect2
+
 # COLOR
 # Hardcode a color for testing.
 # Parent overrides color when instantiating player.
@@ -109,6 +112,9 @@ func _ready() -> void:
 	# Detect collisions.
 	_ret = player_hitbox.connect("area_entered", self, "_on_area_entered")
 	_ret = parent_node.connect("player_hit", self, "_on_player_hit")
+
+	# Find out how big my world is.
+	world = parent_node.game_window
 
 # ---------------------
 # | Move player_block |
@@ -225,6 +231,29 @@ func move(direction: Vector2, speed: float = speed_from_regular_movement()) -> v
 	# Calculate relative and absolute destination.
 	var relative_movement = (direction * grid.SIZE) # for RayCast
 	var destination = position + relative_movement # for Tween
+
+	if DEBUGGING:
+		print("Me before: {m}, after: {a}, World Bounds: {wp}-{we}".format({
+			"m": position.x,
+			"a": destination.x,
+			"wp": world.position.x,
+			"we": world.end.x,
+			}))
+
+	# TODO: this screen wrapping has problems:
+	# 1. Player zips across screen instead of wrapping.
+	# 2. RayCast does not see the player it hits by wrapping.
+	#
+	# Wrap around the screen. "position" is top-left, "end" is bottom-right
+	if destination.x < world.position.x:
+		destination.x = world.end.x
+	elif destination.x > world.end.x:
+		destination.x = world.position.x
+	if destination.y < world.position.y:
+		destination.y = world.end.y
+	elif destination.y > world.end.y:
+		destination.y = world.position.y
+
 	if move_will_collide(player_ray, relative_movement):
 		notify_victim(player_ray)
 		# Slow the attacker
@@ -252,6 +281,7 @@ func move(direction: Vector2, speed: float = speed_from_regular_movement()) -> v
 		0) # delay
 
 	_done = smooth_move.start()
+
 
 
 # Assign a direction to each arrow press.
