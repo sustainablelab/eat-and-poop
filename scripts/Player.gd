@@ -12,6 +12,9 @@ var DEBUGGING: bool
 # TODO: time standing still, tell `player_block` to `express_pooping()` when
 # timer is up, similar idea to `express_motion`.
 
+onready var poop_timer: Timer = Timer.new()
+const stand_sec: float = 2.0
+
 # JOYSTICK
 # Hardcode a default joystick device_num for testing.
 # Parent overrides `device_num` when it instantiates Player and
@@ -101,11 +104,16 @@ func _ready() -> void:
 	player_block.color = color
 	add_child(player_block)
 
+	# SETUP TIMER
+	poop_timer.one_shot = true
+	var _ret: int
+	_ret = poop_timer.connect("timeout", self, "_on_poop_timeout")
+	add_child(poop_timer)
+
 	# SETUP MOVEMENT
 	# Use a tween to animate moving in the grid.
 	add_child(smooth_move)
 	# Detect tween start/stop to change wobble effect while moving.
-	var _ret: int
 	_ret = smooth_move.connect("tween_started", self, "_on_smooth_move_started")
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 	# SETUP COLLISIONS
@@ -126,6 +134,7 @@ func _process(_delta):
 		# Move based on keyboard/joystick input
 		for motion in ui_inputs: # `for` iterates over dict keys
 			if Input.is_action_pressed(motion):
+				poop_timer.stop()
 				# player_block.move(ui_inputs[motion])
 				move(ui_inputs[motion])
 				if DEBUGGING_JOYMOTION:
@@ -232,7 +241,8 @@ func move(direction: Vector2, speed: float = speed_from_regular_movement()) -> v
 	var relative_movement = (direction * grid.SIZE) # for RayCast
 	var destination = position + relative_movement # for Tween
 
-	if DEBUGGING:
+	var DEBUGGING_WRAPAROUND := false
+	if DEBUGGING_WRAPAROUND:
 		print("Me before: {m}, after: {a}, World Bounds: {wp}-{we}".format({
 			"m": position.x,
 			"a": destination.x,
@@ -308,10 +318,15 @@ func _on_smooth_move_started(_object, _key): # _vars are unused
 func _on_smooth_move_completed(_object, _key): # _vars are unused
 	is_moving = false
 	player_block.express_standing_still()
+	poop_timer.start(stand_sec)
 
 	if DEBUGGING_TWEEN:
 		print("tween stop:")
 
+
+func _on_poop_timeout():
+	# print("TIMEOUT")
+	player_block.express_pooping()
 
 func _on_area_entered(area):
 	# TODO: Get thrown back if standing still.

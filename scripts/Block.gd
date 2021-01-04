@@ -16,7 +16,9 @@ var square_points: PoolVector2Array setget set_square_points
 
 # Randomize the square points for a wobble effect.
 var square_wobbles: bool = true
+var square_shakes: bool = false
 var wobble_period: float = 0.01 # bigger number = slower
+var shake_period: float = 0.02
 
 # growth_shrink_amount sets how much to grow/shrink by: 0 == no growth
 # range: 0.0:1.0
@@ -100,6 +102,14 @@ func _process(delta):
 			self.square_points = random_wobbly_square()
 			# Reset the wobble period timer
 			delta_sum = 0
+	elif square_shakes:
+		delta_sum += delta
+		if delta_sum >= self.shake_period:
+			self.square_points = random_shaky_square()
+			# self.square_points = random_wobbly_square()
+			# Reset the wobble period timer
+			delta_sum = 0
+
 
 # _draw() runs once, sometime shortly after _ready() runs
 func _draw() -> void:
@@ -144,7 +154,16 @@ func set_color(c: Color) -> void:
 
 # Larger deviation communicates block is in motion.
 func express_motion():
+	square_shakes = false
+	square_wobbles = true
 	self.max_wobble_deviation = grid.SIZE * WOBBLE_AMOUNT_WHILE_MOVING
+
+
+func express_pooping():
+	square_wobbles = false
+	square_shakes = true
+	# print("I'm pooping here")
+	self.square_points = random_shaky_square()
 
 
 # Restore deviation to original amount when standing still.
