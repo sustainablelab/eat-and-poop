@@ -42,6 +42,39 @@
         - oily food: any move (or throwback) causes player to
           slide until they hit an obstacle
 
+# block types
+
+- player
+- food
+    - does not move
+        - has some animation, but not as excited as player
+    - player "pushes" against food to "eat it"
+    - food becomes part of the player's body when eaten
+        - e.g., if player is one block and eats food, the player
+          is now two blocks long
+        - food retains its color in the player
+        - different colors give the player different powers
+    - food is different colors
+- poop
+    - does not move
+        - has some animation, but even less excited than food
+          animation
+    - acts as an obstacle
+    - all poop is same color
+- teleport
+    - `teleport` block moves player to another `teleport` block
+      on the board
+    - Lily suggested this after she saw my failed attempt at
+      screen-wraparound:
+        - same motion tween for normal locomotion works nice for teleport
+        - when destination is not right next to the player, it's
+          a teleportation!
+    - one possible use: spawn teleportation blocks when players
+      lose parts of their body
+        - spawn a block at the edible body part
+        - spawn a block near the opponents
+        - helps opponents go eat the fallen body parts
+
 # aesthetics
 - blocks are squares
     - block size sets the grid of the game

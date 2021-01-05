@@ -3,6 +3,10 @@ var DEBUGGING = true
 var game_window: Rect2 # Game window
 onready var grid: Grid = Grid.new()
 
+# World emits signal when joystick connects.
+signal disconnected
+signal connected
+
 # Parent sets `num_players` based on number of connected joysticks.
 # Parent adjusts `num_players` when number of connected joysticks
 # changes.
@@ -163,8 +167,7 @@ func remove_player(player_index: int) -> void:
 	# other players can interact with it. But the player cannot
 	# be controlled because the joystick is disconnected.
 	# When the joystick reconnects, control is restored.
-	players[player_index].player_block.color.a = 0.3
-	pass
+	emit_signal("disconnected", players[player_index].player_name)
 
 
 func add_player(player_index: int) -> void:
@@ -195,7 +198,7 @@ func add_player(player_index: int) -> void:
 		# `Player` should be the one to interpret this as a
 		# change in alpha. `World` should not know how `Player`
 		# visualizes itself with `Block`.
-		players[player_index].player_block.color.a = 1
+		emit_signal("connected", players[player_index].player_name)
 		return
 
 	# Instantiate a new player.

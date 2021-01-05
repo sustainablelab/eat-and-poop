@@ -9,6 +9,19 @@ extends Node2D
 
 var DEBUGGING: bool
 
+
+# World emits signal when joystick disconnects.
+func _on_disconnected(name):
+	if player_name == name:
+		player_block.express_disconnected()
+		poop_timer.stop()
+
+
+# World emits signal when joystick connects.
+func _on_connected(name):
+	if player_name == name:
+		player_block.express_connected()
+
 # TODO: time standing still, tell `player_block` to `express_pooping()` when
 # timer is up, similar idea to `express_motion`.
 
@@ -59,6 +72,10 @@ func _ready() -> void:
 	else:
 		DEBUGGING = true
 
+	var _ret: int # throwaway return value
+	_ret = parent_node.connect("connected", self, "_on_connected")
+	_ret = parent_node.connect("disconnected", self, "_on_disconnected")
+
 	if DEBUGGING:
 		print("Running Player.gd: {n}._ready()... {pn}".format({
 			"n": name,
@@ -103,10 +120,12 @@ func _ready() -> void:
 	# about color.
 	player_block.color = color
 	add_child(player_block)
+	# Player begins as "standing still".
+	# TODO: create a "just-added" animation and put in Block.express_connected()
+	player_block.express_connected()
 
 	# SETUP TIMER
 	poop_timer.one_shot = true
-	var _ret: int
 	_ret = poop_timer.connect("timeout", self, "_on_poop_timeout")
 	add_child(poop_timer)
 

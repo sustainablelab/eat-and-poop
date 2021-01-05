@@ -6,6 +6,7 @@ var DEBUGGING: bool
 # TODO: add hook for Parent to tell Block to `express_pooping()`,
 # similar idea to `express_motion()`
 
+
 # The fundamental square parameters use setters.
 # The setters call update(): anytime these fundamental square
 # parameters are written, update() redraws the square.
@@ -44,10 +45,11 @@ var rng = RandomNumberGenerator.new()
 
 onready var grid: Grid = Grid.new()
 
+var parent_node: Node
 
 func _ready():
 	# Inherit parent.DEBUGGING if this scene is not the entry point.
-	var parent_node: Node = get_parent()
+	parent_node = get_parent()
 	if parent_node.name != "root":
 		DEBUGGING = parent_node.DEBUGGING
 	else:
@@ -94,6 +96,8 @@ var delta_sum: float = 0
 # `delta` is on the order of 10ms, the exact value depends on how
 # busy the processor is.
 # Animate the wobble effect.
+# TODO: how do I "turn off" _process() when parent node is
+# disconnected (controller is removed)?
 func _process(delta):
 	if square_wobbles:
 		delta_sum += delta
@@ -168,8 +172,21 @@ func express_pooping():
 
 # Restore deviation to original amount when standing still.
 func express_standing_still():
+	square_wobbles = true
 	self.max_wobble_deviation = grid.SIZE * WOBBLE_AMOUNT
 
+
+func express_connected():
+	express_standing_still()
+	self.color.a = 1.0 # max alpha
+
+func express_disconnected():
+	# TODO: remembering to put all possible "animations" here is
+	# stupid, find a better design for "freezing" the sprite's
+	# appearance when joystick disconnects.
+	square_shakes = false
+	square_wobbles = false
+	self.color.a = 0.3 # low-alpha gives sprite faded-out look
 
 # All cool art/animation is custom drawing in 2D -- see example
 # here on "Custom drawing in 2D":
