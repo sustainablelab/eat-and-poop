@@ -94,7 +94,7 @@ func _ready() -> void:
 	# Setup the HitBox: override HitBox size (half_extents)
 	# player_hitbox.half_extents = Vector2(grid.SIZE/1.5, grid.SIZE/1.5)
 	# player_hitbox.half_extents = Vector2(grid.SIZE/2.5, grid.SIZE/2.5)
-	player_hitbox.half_extents = Vector2(grid.SIZE/2.0, grid.SIZE/2.0)
+	player_hitbox.half_extents = Vector2(grid.SIZE/3.0, grid.SIZE/3.0)
 	player_hitbox.area_name = player_name
 	add_child(player_hitbox)
 
@@ -137,8 +137,11 @@ func _ready() -> void:
 	_ret = smooth_move.connect("tween_completed", self, "_on_smooth_move_completed")
 	# SETUP COLLISIONS
 	# Detect collisions.
-	_ret = player_hitbox.connect("area_entered", self, "_on_area_entered")
+	# World tells players how they were hit.
 	_ret = parent_node.connect("player_hit", self, "_on_player_hit")
+	# Tell World I tried to pass through another player (happens
+	# when both players are moving).
+	_ret = player_hitbox.connect("area_entered", self, "_on_area_entered")
 
 	# Find out how big my world is.
 	world = parent_node.game_window
@@ -161,10 +164,6 @@ func _process(_delta):
 					print(Input.get_joy_axis(self.device_num, 0))
 
 
-# Emit a signal when this Player's move causes a collision.
-signal hit
-
-
 # Respond to `hit` signal when another Player's move collided into this player.
 func _on_player_hit(victim_name, collision_normal) -> void:
 	if victim_name == player_name:
@@ -175,6 +174,8 @@ func _on_player_hit(victim_name, collision_normal) -> void:
 				}))
 		# move_because_hit(collision_normal*-1)
 		move(collision_normal*-1, speed_from_being_hit())
+		# TODO: handle case collision_normal==0 by picking random
+		# direction to move.
 
 
 var DEBUGGING_COLLISION := false
@@ -205,9 +206,16 @@ func move_will_collide(ray: RayCast2D, relative_movement: Vector2) -> bool:
 
 	return will_collide
 
+
+# Emit a signal when this Player's move causes a collision.
+signal hit
+
+
 func notify_victim(ray: RayCast2D) -> void:
+	# Next move hits a standing target.
 	# Emit a signal connected to World.
 	# World then broadcasts a new signal connected to all players.
+	# The victim reacts.
 	#
 	# Some values I might want to use later:
 	# var collision_point: Vector2 = player_ray.get_collision_point()
@@ -215,7 +223,10 @@ func notify_victim(ray: RayCast2D) -> void:
 
 	var victim_name: String = ray.get_collider().area_name
 	var collision_normal: Vector2 = ray.get_collision_normal()
-	# Notify other player with collision details.
+
+	# Parent notifies other players with collision details.
+	# victim_name: who was hit
+	# collision_normal: outward normal of victim's struck face
 	emit_signal("hit", victim_name, collision_normal)
 
 	if DEBUGGING_COLLISION:
@@ -347,7 +358,32 @@ func _on_poop_timeout():
 	# print("TIMEOUT")
 	player_block.express_pooping()
 
-func _on_area_entered(area):
+# Emit a signal when this Player's move crosses another Player's move.
+signal double_hit
+
+
+func _on_area_entered(area) -> void:
+	# `area` is the hitbox of the other player.
+	#	Both players report.
+	#	I only need one player_name from each.
+	#	Player reports name of opponent.
+
+	# Figure out what direction player was going based on
+	# joystick/keyboard.
+	var player_direction: Vector2 = Vector2.ZERO
+	for motion in ui_inputs: # `for` iterates over dict keys
+		if Input.is_action_pressed(motion):
+			player_direction = ui_inputs[motion]
+		emit_signal(
+			"double_hit",
+			area.area_name,
+			player_direction*-1
+			)
+	# If direction is still ZERO, do nothing. Someone will press
+	# a key.
+
+
+func _old_on_area_entered(area): # not used
 	# TODO: Get thrown back if standing still.
 	if not is_moving:
 		# Use get_collision_normal to find out the Vector2 of the attacker.

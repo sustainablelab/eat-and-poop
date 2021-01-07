@@ -256,6 +256,7 @@ func add_player(player_index: int) -> void:
 	# (`connect()` returns 0: throw away return value in a '_var')
 	var _ret: int
 	_ret = player.connect("hit", self, "_on_hit")
+	_ret = player.connect("double_hit", self, "_on_double_hit")
 
 	# Create an input_map dict for this player's joystick/keyboard.
 	input_maps.append({
@@ -432,8 +433,14 @@ func add_player(player_index: int) -> void:
 # Broadcast when one player hits another.
 signal player_hit
 
+
 func _on_hit(victim_name, collision_normal) -> void:
 	emit_signal("player_hit", victim_name, collision_normal)
 
-
-
+func _on_double_hit(player_name, player_direction) -> void:
+	# Both players report. I only need one player_name from each.
+	# Player direction is known from keypress.
+	# If no key is pressed, expect Player sends a random value.
+	emit_signal("player_hit", player_name, player_direction)
+	if DEBUGGING:
+		print("Double Hit!")

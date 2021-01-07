@@ -140,6 +140,16 @@
         - sometimes it's good to poop
         - you are what you eat
 
+# title screen
+
+- 3 players start out then quickly grow to spell the world EAT
+- the individual blocks that makes up the letters move to form
+  the word AND
+- and they move again to form the word POOP
+- the blocks in POOP start shaking, turn to POOP (like popcorn),
+  then fall off the screen
+- and repeat
+
 # music
 - space
 - the melody on top of space alternates between the players to
