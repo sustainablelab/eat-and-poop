@@ -1,16 +1,67 @@
-# Fix collisions
+# [ ] Double-collisions knock players off the grid
 
-If players are both moving, collision is not detected.
+## How collisions work
 
-- `World` notifies players when they are hit.
-- If players are both moving and there Area2D overlap, `World`
-  notifies both players they get knocked back
+### Single collision
 
-I sort of fixed this using `_on_area_entered()`, but the players
-get off the grid real easy. This will be easier to work out when
-I replace the grid with a proper `TileMap`.
+One player bumps into a player standing still, no problem.
 
-# Use `TileMap`
+- when a `Player` is about to move to a square occupied by
+  another player, `Player` reports to World the name of the
+  player they are about to hit and the `collision_normal`
+- `World` announces to all players who is hit and which face they
+  were hit on
+
+### Double collision
+
+Problem was that when two players are both moving towards each
+other, the collision was not detected because both the test for
+collisions only happened when the player was about to move -- if
+the opponent is not in the other square yet, or if the opponent
+just left the other square -- no collision was detected and
+they'd pass through each other.
+
+## Handle double collisions with `Area2D`
+
+I "fixed" this by checking `Area2D` for overlap.
+
+I shrink the `Area2D` extents so that it only triggers when
+players are overlapping.
+
+If players are both moving and their Area2D overlap:
+
+- `Player` announces to world the direction they are moving and
+  the player they are overlapping with
+- `World` announces to all players as if this was a regular hit,
+  the difference being that now `World` does the announcement
+  twice: once for each player in the overlap; also the
+  `collision_normal` is determined from the direction the players
+  are moving
+
+This did not eliminate the stack overflow caused by the RayCast2D
+collision detection when players were directly on top of each
+other. This still needs the "temporary fix" that players do not
+report collisions when the `collision_normal` is (0,0).
+
+## Double collisions knock players off the grid
+
+The issue now is that players get knocked off the grid when both
+are moving and they collide. I think this is because I'm
+calculating players new position by just multiplying their
+current position with the `collision_normal`. When players are in
+motion, their "current position" is not on the grid.
+
+- [ ] player's maintain knowledge of their `grid_position`
+    - only update `grid_position` at the end of a tween
+    - always use `grid_position` when calculating new position
+      after a collision
+
+## Switch to `TileMap`!
+
+Note: this problem will be much simpler when I replace the grid
+with a proper `TileMap`.
+
+# [ ] replace `Grid.gd` with a `TileMap`
 
 - I rolled my own grid
     - that was dumb, it's time to switch
@@ -21,66 +72,31 @@ I replace the grid with a proper `TileMap`.
           isometric `TileMap`
     - switch to a `TileMap`
 - [ ] how do I do a `TileMap` in code?
-    - [x] watch a tutorial
+    - [x] watch the GDQuest tutorial
         - I did the "first-godot-2d-platformer"
         - now I have a `TileMap` I can poke at in `Inspector`
           while looking at the reference documentation in the
           `Script` tab
+    - [x] put `TileMap` code snippets in `snippets.md`
+    - [ ] watch the KidsCanCode tutorials on `TileMap`
 
-## `TileMap` snippets
+# Make a background
 
-### New TileMap in script
+Things to implement in order of difficulty...
 
-Skip this if the script is attached to a TileMap Node in the
-editor. I can't think of a reason why I wouldn't create the
-TileMap node in the editor, so I'll probably never need this, but
-here it is.
-
-```gdscript NOT TESTED
-var tilemap := TileMap.new()
-
-func _ready():
-    add_child(tilemap)
-```
-
-### Property snippets
-
-A `TileMap` manages all the instances of stuff in the world that
-does not require complex interactive behavior (complex like
-players and enemies). `TileMap` makes it easy to lay down a grid
-of tiles based on a library of tile artwork called the `TileSet`.
-
-Otherwise, I'd have to have to manage each tile as its own node
-in the scene tree when laying out maps -- that would be
-impossible. And from videos I saw on Kids Can Code, it looks
-especially useful for procedurally generated maps.
-
-The tile instances have some interactive behavior. For example,
-"wall" tiles that the player collides with, or "trail" tiles if
-the player leaves a trail of something behind them (like the Tron
-racing game).
-
-#### property `mode`
-
-```gdscript NOT TESTED
-# Orthogonal tiles (top-down maze or a side-view platformer)
-tilemap.mode = MODE_SQUARE
-# Isometric (still 2D)
-tilemap.mode = MODE_ISOMETRIC
-# Custom? Maybe triangular grids for hexagon games?
-tilemap.mode = MODE_CUSTOM
-```
-
-#### property `tile_set`
-
-```gdscript NOT TESTED
-tilemap.tile_set = "res://assets/tileset.tres"
-```
-
-#### property `centered_texture`
-
-Center textures in the middle of the tile.
-
-```gdscript NOT TESTED
-tilemap.centered_texture = true # default is false
-```
+- [ ] simple black
+- [ ] animated "noise" background
+    - black, but random grainy greys, like TV white noise, but
+      darker
+- [ ] crazy rainbow worm animation
+    - background is black with a chaotic celtic knot tiling with
+      the "rope" outlined in rainbow colors (a cycling through
+      all the colors)
+    - the rope is not permanently visible but instead slithers
+      around the screen
+    - do this by animating which part of the rope is visible
+    - so the background is like a compost heap, but in a
+      futuristic, infinite void kind of way
+    - another way to do this might be calculate curved paths and
+      do a combination motion and color tween of two lines along
+      the path -- but how do I get worm interwining effects?

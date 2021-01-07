@@ -83,6 +83,10 @@
     - movement is a tween that stops when the player gets to new
       tile
 - background is black
+    - black is minimum viable
+    - animated dark static is next step up
+    - crazy rainbow worm infinite space void animation is where I
+      really want to go with this
 - edible blocks "rainbow cycle"
     - when you eat a block it stops changing color
     - the color of the block when you eat it is whatever color it
