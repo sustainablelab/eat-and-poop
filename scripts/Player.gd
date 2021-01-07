@@ -63,6 +63,10 @@ var color: Color = ColorN("magenta", 1) # color, alpha
 
 # Hardcode player's starting position for testing.
 var start_position: Vector2 = Vector2(100.0, 100.0)
+# Player tracks there latest position on the grid.
+#	This differentiates from `position`, which changes during Tweens.
+#	`_grid_position` only updates after a Tween.
+var _grid_position: Vector2 = Vector2(100.0, 100.0)
 
 func _ready() -> void:
 	# Inherit parent.DEBUGGING if this scene is not the entry point.
@@ -90,6 +94,9 @@ func _ready() -> void:
 	# Use starting position set by Parent Node.
 	# This uses the default start_position when testing Player.
 	position = start_position
+
+	# Initialize the player's official Grid position
+	_grid_position = position
 
 	# Setup the HitBox: override HitBox size (half_extents)
 	# player_hitbox.half_extents = Vector2(grid.SIZE/1.5, grid.SIZE/1.5)
@@ -275,12 +282,13 @@ func speed_from_being_hit() -> float:
 func move(direction: Vector2, speed: float = speed_from_regular_movement()) -> void:
 	# Calculate relative and absolute destination.
 	var relative_movement = (direction * grid.SIZE) # for RayCast
-	var destination = position + relative_movement # for Tween
+	# var destination = position + relative_movement # for Tween
+	var destination = _grid_position + relative_movement # for Tween
 
 	var DEBUGGING_WRAPAROUND := false
 	if DEBUGGING_WRAPAROUND:
 		print("Me before: {m}, after: {a}, World Bounds: {wp}-{we}".format({
-			"m": position.x,
+			"m": _grid_position.x,
 			"a": destination.x,
 			"wp": world.position.x,
 			"we": world.end.x,
@@ -319,7 +327,7 @@ func move(direction: Vector2, speed: float = speed_from_regular_movement()) -> v
 	_done = smooth_move.interpolate_property(
 		self, # object
 		"position", # property name
-		position, # start
+		position, # start (whether on or off grid)
 		destination, # stop
 		speed, # time it takes to move in seconds
 		Tween.TRANS_SINE,
@@ -347,12 +355,15 @@ func _on_smooth_move_started(_object, _key): # _vars are unused
 	is_moving = true
 	player_block.express_motion()
 
+
 	if DEBUGGING_TWEEN:
 		print("tween start:")
 
 
 func _on_smooth_move_completed(_object, _key): # _vars are unused
 	is_moving = false
+	# Update Player's knowledge of their grid position
+	_grid_position = position
 	player_block.express_standing_still()
 	poop_timer.start(stand_sec)
 
