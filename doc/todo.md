@@ -51,10 +51,24 @@ calculating players new position by just multiplying their
 current position with the `collision_normal`. When players are in
 motion, their "current position" is not on the grid.
 
-- [ ] player's maintain knowledge of their `grid_position`
+- [x] player's maintain knowledge of their `grid_position`
     - only update `grid_position` at the end of a tween
     - always use `grid_position` when calculating new position
       after a collision
+
+Now position eventually equals `_grid_position`. I can tell from
+`Remote Inspector` on `Player` that players are staying on grid.
+
+So this eliminated the problem of getting knocked off the grid.
+
+## Double-collision results seem random
+
+I did not expect this. I didn't introduce anything random to
+collisions, and yet it seems like, on double collision, sometimes
+the players pass each other, sometimes they bounce back the
+expected single square, and sometimes they get thrown back *a lot*.
+
+I'm not sure what is causing this.
 
 ## Switch to `TileMap`!
 
