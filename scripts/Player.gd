@@ -190,6 +190,11 @@ func move_will_collide(ray: RayCast2D, relative_movement: Vector2) -> bool:
 	# If players start movement at exact same time, they both get onto the same
 	# square, then they're frozen because of colliding.
 	# Temporary fix: detect this case and let players pass through each other.
+	#
+	# Note, if this is false it causes a stack overflow because
+	# function keep getting called while players are atop one
+	# another. Make this true to silence the collision and avoid
+	# the stack overflow.
 	var TEMPORARY_FIX := true
 	if TEMPORARY_FIX:
 		if ray.get_collision_normal() == Vector2(0,0):
@@ -198,8 +203,9 @@ func move_will_collide(ray: RayCast2D, relative_movement: Vector2) -> bool:
 			will_collide = false
 
 	# LONGTERM FIX:
-	# Kurt says either:
-	# 1. Actually fix it so this case never happens.
+	# Kurt says I have two options:
+	# 1. Actually fix it so this case never happens. I'm trying
+	# to do this with the Area2D.
 	# 2. When throw-back behavior is implemented, make it so that game
 	# randomly decides which player "won" that confrontation, and the other
 	# player gets thrown back.
